@@ -4,14 +4,6 @@ Proyecto final de Programacion 2.
 
 El programa se esta desarrollando en Java utilizando NetBeans. La idea es crear un sistema para administrar las canchas, clientes y reservas del Complejo Deportivo La 10.
 
-## Como abrirlo
-
-1. Abrir NetBeans.
-2. Seleccionar "Abrir proyecto".
-3. Buscar la carpeta del proyecto.
-4. Ejecutar la clase `Main.java`.
-
-Se necesita JDK 17 o superior.
 
 ## Lo que llevo hecho
 
