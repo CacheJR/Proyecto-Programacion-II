@@ -30,8 +30,7 @@ Proyecto-Programacion-II/
 |-- .gitignore
 |-- docs/
 |   |-- plan_entregas.md
-|   |-- bitacora_actualizaciones.md
-|   `-- reporte_avance_01.md
+|   `-- bitacora_actualizaciones.md
 `-- src/main/java/com/canchapro/
     |-- Main.java
     `-- ui/VentanaPrincipal.java
@@ -46,9 +45,11 @@ Proyecto-Programacion-II/
 
 No se registran datos, no se calculan tarifas ni se guardan CSV en este avance. El documento base no solicita un inicio de sesion obligatorio.
 
-## Informes para estudiar y defender el proyecto
+## Seguimiento de avances
 
-Cada avance tendra un reporte en `docs/reporte_avance_XX.md` con las clases, metodos, archivos, decisiones, comprobaciones y preguntas de defensa. Consultar tambien [`docs/bitacora_actualizaciones.md`](docs/bitacora_actualizaciones.md).
+Consultar [`docs/bitacora_actualizaciones.md`](docs/bitacora_actualizaciones.md) para conocer los avances del codigo, y [`docs/plan_entregas.md`](docs/plan_entregas.md) para revisar las proximas funciones.
+
+Los reportes de estudio personales se entregan por separado y **no se incluyen en este repositorio**. La documentacion tecnica exigida para la entrega academica se preparara de forma independiente.
 
 ## Referencia academica
 
