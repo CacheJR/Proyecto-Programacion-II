@@ -1,5 +1,13 @@
 package com.canchapro.ui;
 
+import com.canchapro.DatosEjemplo;
+import com.canchapro.modelo.Cancha;
+import com.canchapro.modelo.Cliente;
+import com.canchapro.modelo.Reserva;
+import java.util.List;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -16,8 +24,8 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 /**
- * Pantalla inicial de CanchaPro. Avance 01: solo navegacion.
- * Todavia no guarda ni administra reservas, clientes o pagos.
+ * Avance 02: navegacion y tablas con objetos de ejemplo en memoria.
+ * Los formularios y el guardado de datos todavia estan pendientes.
  */
 public class VentanaPrincipal extends JFrame {
     private static final Color AZUL_FONDO = new Color(15, 30, 48);
@@ -33,6 +41,9 @@ public class VentanaPrincipal extends JFrame {
         {"Reportes", "REPORTES"}, {"Configuracion", "CONFIGURACION"}
     };
 
+    private final List<Cliente> clientes = DatosEjemplo.crearClientes();
+    private final List<Cancha> canchas = DatosEjemplo.crearCanchas();
+    private final List<Reserva> reservas = DatosEjemplo.crearReservas(clientes, canchas);
     private final CardLayout tarjetas = new CardLayout();
     private final JPanel panelPantallas = new JPanel(tarjetas);
     private final JLabel tituloVista = new JLabel("Inicio");
@@ -106,8 +117,12 @@ public class VentanaPrincipal extends JFrame {
         panelPantallas.setBackground(AZUL_FONDO);
         panelPantallas.add(crearPanelInicio(), "INICIO");
         for (String[] modulo : MODULOS) {
-            if (!"INICIO".equals(modulo[1])) {
-                panelPantallas.add(crearPanelPendiente(modulo[0]), modulo[1]);
+            switch (modulo[1]) {
+                case "CLIENTES" -> panelPantallas.add(crearPanelClientes(), "CLIENTES");
+                case "CANCHAS" -> panelPantallas.add(crearPanelCanchas(), "CANCHAS");
+                case "RESERVAS" -> panelPantallas.add(crearPanelReservas(), "RESERVAS");
+                case "INICIO" -> { }
+                default -> panelPantallas.add(crearPanelPendiente(modulo[0]), modulo[1]);
             }
         }
         contenido.add(panelPantallas, BorderLayout.CENTER);
@@ -123,12 +138,12 @@ public class VentanaPrincipal extends JFrame {
         inicio.add(bienvenida, BorderLayout.NORTH);
         JPanel resumen = new JPanel(new GridLayout(2, 2, 16, 16));
         resumen.setBackground(AZUL_FONDO);
-        resumen.add(crearTarjeta("Clientes", "Pendiente de implementar"));
-        resumen.add(crearTarjeta("Canchas", "Pendiente de implementar"));
-        resumen.add(crearTarjeta("Reservas", "Pendiente de implementar"));
+        resumen.add(crearTarjeta("Clientes", clientes.size() + " ejemplos"));
+        resumen.add(crearTarjeta("Canchas", canchas.size() + " ejemplos"));
+        resumen.add(crearTarjeta("Reservas", reservas.size() + " ejemplos"));
         resumen.add(crearTarjeta("Pagos", "Pendiente de implementar"));
         inicio.add(resumen, BorderLayout.CENTER);
-        JLabel etapa = new JLabel("Avance 01 - Estructura inicial y navegacion (sin datos reales)");
+        JLabel etapa = new JLabel("Avance 02 - Datos de ejemplo en memoria (todavia no se guardan)");
         etapa.setForeground(GRIS_TEXTO);
         etapa.setFont(new Font("SansSerif", Font.ITALIC, 13));
         inicio.add(etapa, BorderLayout.SOUTH);
@@ -148,6 +163,60 @@ public class VentanaPrincipal extends JFrame {
         tarjeta.add(nombre, BorderLayout.NORTH);
         tarjeta.add(detalle, BorderLayout.CENTER);
         return tarjeta;
+    }
+
+    private JPanel crearPanelClientes() {
+        Object[][] filas = new Object[clientes.size()][5];
+        for (int i = 0; i < clientes.size(); i++) {
+            Cliente c = clientes.get(i);
+            filas[i] = new Object[] { c.getCodigo(), c.getNombre(), c.getTelefono(),
+                c.getCorreo(), c.getFechaRegistro() };
+        }
+        return crearTabla(new String[] { "Codigo", "Nombre", "Telefono", "Correo", "Registro" }, filas);
+    }
+
+    private JPanel crearPanelCanchas() {
+        Object[][] filas = new Object[canchas.size()][6];
+        for (int i = 0; i < canchas.size(); i++) {
+            Cancha c = canchas.get(i);
+            filas[i] = new Object[] { c.getCodigo(), c.getNombre(), c.getTipo(),
+                c.getCapacidad(), c.getPrecioBase(), c.getEstado() };
+        }
+        return crearTabla(new String[] { "Codigo", "Cancha", "Tipo", "Capacidad", "Base Q", "Estado" }, filas);
+    }
+
+    private JPanel crearPanelReservas() {
+        Object[][] filas = new Object[reservas.size()][7];
+        for (int i = 0; i < reservas.size(); i++) {
+            Reserva r = reservas.get(i);
+            filas[i] = new Object[] { r.getCodigo(), r.getCliente().getNombre(),
+                r.getCancha().getNombre(), r.getFecha(), r.getHoraInicio(),
+                r.getHoraFin(), r.getEstado() };
+        }
+        return crearTabla(new String[] { "Codigo", "Cliente", "Cancha", "Fecha", "Inicio", "Fin", "Estado" }, filas);
+    }
+
+    private JPanel crearTabla(String[] columnas, Object[][] filas) {
+        JPanel panel = new JPanel(new BorderLayout(0, 15));
+        panel.setBackground(AZUL_FONDO);
+        JLabel aviso = new JLabel("DATOS DE EJEMPLO - no se pueden editar ni guardar todavia");
+        aviso.setForeground(GRIS_TEXTO);
+        panel.add(aviso, BorderLayout.NORTH);
+        DefaultTableModel modelo = new DefaultTableModel(filas, columnas) {
+            @Override
+            public boolean isCellEditable(int fila, int columna) { return false; }
+        };
+        JTable tabla = new JTable(modelo);
+        tabla.setRowHeight(30);
+        tabla.setBackground(AZUL_MENU);
+        tabla.setForeground(BLANCO);
+        tabla.setGridColor(AZUL_CLARO);
+        tabla.setSelectionBackground(AZUL_CLARO);
+        tabla.getTableHeader().setBackground(AZUL_CLARO);
+        tabla.getTableHeader().setForeground(Color.BLACK);
+        tabla.setFillsViewportHeight(true);
+        panel.add(new JScrollPane(tabla), BorderLayout.CENTER);
+        return panel;
     }
 
     private JPanel crearPanelPendiente(String modulo) {

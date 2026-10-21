@@ -1,22 +1,20 @@
 # CanchaPro
 
-Proyecto final de Programacion 2.
-
-El programa se esta desarrollando en Java utilizando NetBeans. La idea es crear un sistema para administrar las canchas, clientes y reservas del Complejo Deportivo La 10.
-
-
-## Lo que llevo hecho
-
-- Estructura inicial del proyecto con Maven.
-- Ventana principal creada con Java Swing.
-- Menu con las secciones del sistema.
-- Cambio entre pantallas al presionar los botones.
-
-Por ahora solo funciona la navegacion de las pantallas. Todavia falta programar los formularios, las reservas, los pagos, el guardado de archivos y los reportes.
+Proyecto de Programacion 2 para organizar un complejo deportivo.
 
 ## Herramientas
 
-- Java
-- NetBeans
-- Swing
-- Maven
+- Java 17 o superior
+- NetBeans y Maven
+- Java Swing
+
+## Avances
+
+1. Ventana principal y menu de navegacion.
+2. Clases Cliente, Cancha y Reserva. Estados de canchas y reservas. Tablas con datos de ejemplo.
+
+Por ahora las tablas solo muestran objetos creados al iniciar el programa. No es posible agregar, editar ni guardar datos; esas funciones se desarrollaran despues.
+
+## Como abrirlo
+
+Abrir el proyecto Maven en NetBeans y ejecutar `Main.java`.
