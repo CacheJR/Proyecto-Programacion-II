@@ -17,7 +17,7 @@ Proyecto de Programacion 2 para organizar un complejo deportivo.
 2. Entrar al menu **Disponibilidad**.
 3. Dejar la fecha que aparece (manana) y la hora 18:00, 60 minutos y Futbol 5.
 4. La Bombonera esta ocupada de 18:00 a 19:30, asi que solo deberia aparecer El Maracana.
-5. Cambiar a 19:30: ambas canchas Futbol 5 deben aparecer.
+5. Cambiar a 19:30 y elegir 30 minutos: ambas canchas Futbol 5 deben aparecer.
 6. Elegir Futbol 7: no debe aparecer El Monumental porque esta en mantenimiento.
 
 Este avance aun utiliza datos de ejemplo en memoria. No guarda archivos CSV, no realiza pagos ni permite crear reservas desde la pantalla. La validacion para registrar reservas existe en `ServicioDisponibilidad`, pero la interfaz de registro se hara despues.
