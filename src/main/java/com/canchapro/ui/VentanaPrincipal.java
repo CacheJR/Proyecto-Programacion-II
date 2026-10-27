@@ -4,6 +4,13 @@ import com.canchapro.DatosEjemplo;
 import com.canchapro.modelo.Cancha;
 import com.canchapro.modelo.Cliente;
 import com.canchapro.modelo.Reserva;
+import com.canchapro.modelo.TipoCancha;
+import com.canchapro.servicio.ServicioDisponibilidad;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
+import javax.swing.JComboBox;
+import javax.swing.JTextField;
 import java.util.List;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -24,7 +31,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 /**
- * Avance 02: navegacion y tablas con objetos de ejemplo en memoria.
+ * Avance 03: consulta de disponibilidad y tablas de ejemplo en memoria.
  * Los formularios y el guardado de datos todavia estan pendientes.
  */
 public class VentanaPrincipal extends JFrame {
@@ -44,6 +51,7 @@ public class VentanaPrincipal extends JFrame {
     private final List<Cliente> clientes = DatosEjemplo.crearClientes();
     private final List<Cancha> canchas = DatosEjemplo.crearCanchas();
     private final List<Reserva> reservas = DatosEjemplo.crearReservas(clientes, canchas);
+    private final ServicioDisponibilidad servicio = new ServicioDisponibilidad(canchas, reservas);
     private final CardLayout tarjetas = new CardLayout();
     private final JPanel panelPantallas = new JPanel(tarjetas);
     private final JLabel tituloVista = new JLabel("Inicio");
@@ -121,6 +129,7 @@ public class VentanaPrincipal extends JFrame {
                 case "CLIENTES" -> panelPantallas.add(crearPanelClientes(), "CLIENTES");
                 case "CANCHAS" -> panelPantallas.add(crearPanelCanchas(), "CANCHAS");
                 case "RESERVAS" -> panelPantallas.add(crearPanelReservas(), "RESERVAS");
+                case "DISPONIBILIDAD" -> panelPantallas.add(crearPanelDisponibilidad(), "DISPONIBILIDAD");
                 case "INICIO" -> { }
                 default -> panelPantallas.add(crearPanelPendiente(modulo[0]), modulo[1]);
             }
@@ -143,7 +152,7 @@ public class VentanaPrincipal extends JFrame {
         resumen.add(crearTarjeta("Reservas", reservas.size() + " ejemplos"));
         resumen.add(crearTarjeta("Pagos", "Pendiente de implementar"));
         inicio.add(resumen, BorderLayout.CENTER);
-        JLabel etapa = new JLabel("Avance 02 - Datos de ejemplo en memoria (todavia no se guardan)");
+        JLabel etapa = new JLabel("Avance 03 - Consulta de disponibilidad (sin guardar archivos)");
         etapa.setForeground(GRIS_TEXTO);
         etapa.setFont(new Font("SansSerif", Font.ITALIC, 13));
         inicio.add(etapa, BorderLayout.SOUTH);
@@ -217,6 +226,82 @@ public class VentanaPrincipal extends JFrame {
         tabla.setFillsViewportHeight(true);
         panel.add(new JScrollPane(tabla), BorderLayout.CENTER);
         return panel;
+    }
+
+    /** Pantalla que consulta el motor; no decide los horarios manualmente. */
+    private JPanel crearPanelDisponibilidad() {
+        JPanel panel = new JPanel(new BorderLayout(0, 20));
+        panel.setBackground(AZUL_FONDO);
+
+        JPanel formulario = new JPanel(new GridLayout(2, 5, 12, 8));
+        formulario.setBackground(AZUL_MENU);
+        formulario.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+        String[] nombres = {"Fecha (AAAA-MM-DD)", "Hora (HH:mm)", "Minutos", "Tipo", "Consulta"};
+        for (String nombre : nombres) {
+            JLabel etiqueta = new JLabel(nombre);
+            etiqueta.setForeground(BLANCO);
+            formulario.add(etiqueta);
+        }
+
+        JTextField fecha = new JTextField(LocalDate.now().plusDays(1).toString());
+        JTextField hora = new JTextField("18:00");
+        JComboBox<Integer> duracion = new JComboBox<>(new Integer[] {30, 60, 90, 120});
+        duracion.setSelectedItem(60);
+        JComboBox<TipoCancha> tipo = new JComboBox<>(TipoCancha.values());
+        JButton buscar = new JButton("Consultar");
+        formulario.add(fecha);
+        formulario.add(hora);
+        formulario.add(duracion);
+        formulario.add(tipo);
+        formulario.add(buscar);
+        panel.add(formulario, BorderLayout.NORTH);
+
+        JPanel resultado = new JPanel(new BorderLayout(0, 10));
+        resultado.setBackground(AZUL_FONDO);
+        JLabel mensaje = new JLabel("Ingrese los datos y presione Consultar.");
+        mensaje.setForeground(GRIS_TEXTO);
+        resultado.add(mensaje, BorderLayout.NORTH);
+        DefaultTableModel modelo = new DefaultTableModel(
+                new String[] {"Codigo", "Cancha", "Tipo", "Horario", "Estado"}, 0) {
+            @Override
+            public boolean isCellEditable(int fila, int columna) { return false; }
+        };
+        JTable tabla = new JTable(modelo);
+        tabla.setRowHeight(32);
+        tabla.setBackground(AZUL_MENU);
+        tabla.setForeground(BLANCO);
+        tabla.setGridColor(AZUL_CLARO);
+        tabla.setSelectionBackground(AZUL_CLARO);
+        tabla.setFillsViewportHeight(true);
+        resultado.add(new JScrollPane(tabla), BorderLayout.CENTER);
+        panel.add(resultado, BorderLayout.CENTER);
+        buscar.addActionListener(evento -> consultarDisponibilidad(
+            fecha, hora, duracion, tipo, modelo, mensaje));
+        return panel;
+    }
+
+    private void consultarDisponibilidad(JTextField fecha, JTextField hora,
+            JComboBox<Integer> duracion, JComboBox<TipoCancha> tipo,
+            DefaultTableModel modelo, JLabel mensaje) {
+        modelo.setRowCount(0);
+        try {
+            LocalDate dia = LocalDate.parse(fecha.getText().trim());
+            LocalTime inicio = LocalTime.parse(hora.getText().trim());
+            int minutos = (Integer) duracion.getSelectedItem();
+            TipoCancha seleccionado = (TipoCancha) tipo.getSelectedItem();
+            List<Cancha> disponibles = servicio.buscarDisponibles(
+                    seleccionado, dia, inicio, minutos);
+            for (Cancha cancha : disponibles) {
+                modelo.addRow(new Object[] {cancha.getCodigo(), cancha.getNombre(),
+                    cancha.getTipo(), inicio + " a " + inicio.plusMinutes(minutos), "LIBRE"});
+            }
+            mensaje.setForeground(GRIS_TEXTO);
+            mensaje.setText("Encontradas " + disponibles.size()
+                    + " cancha(s) libre(s). Solo se muestran las disponibles.");
+        } catch (DateTimeParseException | IllegalArgumentException error) {
+            mensaje.setForeground(new Color(255, 175, 175));
+            mensaje.setText("Dato incorrecto: " + error.getMessage());
+        }
     }
 
     private JPanel crearPanelPendiente(String modulo) {

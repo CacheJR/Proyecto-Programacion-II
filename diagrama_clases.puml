@@ -4,16 +4,12 @@ class Cliente {
   - codigo: String
   - nombre: String
   - telefono: String
-  - correo: String
-  - fechaRegistro: LocalDate
   + actualizarContacto(telefono, correo): void
 }
 class Cancha {
   - codigo: String
   - nombre: String
   - tipo: TipoCancha
-  - capacidad: int
-  - precioBase: BigDecimal
   - estado: EstadoCancha
   - horaApertura: LocalTime
   - horaCierre: LocalTime
@@ -25,33 +21,40 @@ class Reserva {
   - cancha: Cancha
   - fecha: LocalDate
   - horaInicio: LocalTime
-  - duracionMinutos: int
   - horaFin: LocalTime
   - estado: EstadoReserva
   + confirmar(): void
-  + iniciar(): void
-  + finalizar(): void
   + cancelar(motivo, operador): void
 }
+class ServicioDisponibilidad {
+  - canchas: List<Cancha>
+  - reservas: List<Reserva>
+  + buscarDisponibles(tipo, fecha, inicio, minutos): List<Cancha>
+  + estaDisponible(cancha, fecha, inicio, minutos): boolean
+  + seTraslapan(inicioNuevo, finNuevo, inicioExistente, finExistente): boolean
+  + registrarReserva(codigo, cliente, cancha, fecha, inicio, minutos): Reserva
+}
 enum EstadoCancha {
-  DISPONIBLE
-  MANTENIMIENTO
-  INACTIVA
+ DISPONIBLE
+ MANTENIMIENTO
+ INACTIVA
 }
 enum EstadoReserva {
-  PENDIENTE
-  CONFIRMADA
-  EN_CURSO
-  FINALIZADA
-  CANCELADA
+ PENDIENTE
+ CONFIRMADA
+ EN_CURSO
+ FINALIZADA
+ CANCELADA
 }
 enum TipoCancha {
-  FUTBOL_5
-  FUTBOL_7
+ FUTBOL_5
+ FUTBOL_7
 }
 Cliente "1" <-- "0..*" Reserva : cliente
 Cancha "1" <-- "0..*" Reserva : cancha
 Cancha --> EstadoCancha
 Cancha --> TipoCancha
 Reserva --> EstadoReserva
+ServicioDisponibilidad --> "0..*" Cancha
+ServicioDisponibilidad --> "0..*" Reserva
 @enduml
