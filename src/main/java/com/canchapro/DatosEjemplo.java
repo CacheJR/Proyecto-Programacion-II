@@ -31,15 +31,31 @@ public final class DatosEjemplo {
         return canchas;
     }
 
+    public static List<ServicioAdicional> crearServicios() {
+        List<ServicioAdicional> servicios = new ArrayList<>();
+        servicios.add(new ServicioAdicional("S01", "Balon", new BigDecimal("25.00")));
+        servicios.add(new ServicioAdicional("S02", "Arbitro", new BigDecimal("80.00")));
+        servicios.add(new ServicioAdicional("S03", "Chalecos", new BigDecimal("35.00")));
+        servicios.add(new ServicioAdicional("S04", "Iluminacion", new BigDecimal("40.00")));
+        return servicios;
+    }
+
     public static List<Reserva> crearReservas(List<Cliente> clientes, List<Cancha> canchas) {
         List<Reserva> reservas = new ArrayList<>();
         LocalDate fecha = LocalDate.now().plusDays(1);
         Reserva reserva1 = new Reserva("R001", clientes.get(0), canchas.get(0),
             fecha, LocalTime.of(18, 0), 90);
+        List<ServicioAdicional> servicios = crearServicios();
+        reserva1.agregarServicio(servicios.get(0));
+        reserva1.agregarServicio(servicios.get(1));
+        reserva1.registrarPago(new Pago("P001", new BigDecimal("100.00"),
+                MetodoPago.EFECTIVO, "Anticipo de ejemplo"));
         reserva1.confirmar();
         reservas.add(reserva1);
-        reservas.add(new Reserva("R002", clientes.get(1), canchas.get(1),
-            fecha, LocalTime.of(20, 0), 60));
+        Reserva reserva2 = new Reserva("R002", clientes.get(1), canchas.get(1),
+            fecha, LocalTime.of(20, 0), 60);
+        reserva2.agregarServicio(servicios.get(2));
+        reservas.add(reserva2);
         return reservas;
     }
 }

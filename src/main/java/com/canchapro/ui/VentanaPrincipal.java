@@ -4,6 +4,12 @@ import com.canchapro.DatosEjemplo;
 import com.canchapro.modelo.Cancha;
 import com.canchapro.modelo.Cliente;
 import com.canchapro.modelo.Reserva;
+import com.canchapro.modelo.ServicioAdicional;
+import com.canchapro.modelo.MetodoPago;
+import com.canchapro.modelo.Pago;
+import java.math.BigDecimal;
+import java.awt.FlowLayout;
+import javax.swing.JOptionPane;
 import com.canchapro.modelo.TipoCancha;
 import com.canchapro.servicio.ServicioDisponibilidad;
 import java.time.LocalDate;
@@ -51,6 +57,8 @@ public class VentanaPrincipal extends JFrame {
     private final List<Cliente> clientes = DatosEjemplo.crearClientes();
     private final List<Cancha> canchas = DatosEjemplo.crearCanchas();
     private final List<Reserva> reservas = DatosEjemplo.crearReservas(clientes, canchas);
+    private final List<ServicioAdicional> catalogoServicios = DatosEjemplo.crearServicios();
+    private DefaultTableModel tablaPagos;
     private final ServicioDisponibilidad servicio = new ServicioDisponibilidad(canchas, reservas);
     private final CardLayout tarjetas = new CardLayout();
     private final JPanel panelPantallas = new JPanel(tarjetas);
@@ -129,6 +137,7 @@ public class VentanaPrincipal extends JFrame {
                 case "CLIENTES" -> panelPantallas.add(crearPanelClientes(), "CLIENTES");
                 case "CANCHAS" -> panelPantallas.add(crearPanelCanchas(), "CANCHAS");
                 case "RESERVAS" -> panelPantallas.add(crearPanelReservas(), "RESERVAS");
+                case "PAGOS" -> panelPantallas.add(crearPanelPagos(), "PAGOS");
                 case "DISPONIBILIDAD" -> panelPantallas.add(crearPanelDisponibilidad(), "DISPONIBILIDAD");
                 case "INICIO" -> { }
                 default -> panelPantallas.add(crearPanelPendiente(modulo[0]), modulo[1]);
@@ -150,9 +159,9 @@ public class VentanaPrincipal extends JFrame {
         resumen.add(crearTarjeta("Clientes", clientes.size() + " ejemplos"));
         resumen.add(crearTarjeta("Canchas", canchas.size() + " ejemplos"));
         resumen.add(crearTarjeta("Reservas", reservas.size() + " ejemplos"));
-        resumen.add(crearTarjeta("Pagos", "Pendiente de implementar"));
+        resumen.add(crearTarjeta("Pagos", "Abonos y saldos"));
         inicio.add(resumen, BorderLayout.CENTER);
-        JLabel etapa = new JLabel("Avance 03 - Consulta de disponibilidad (sin guardar archivos)");
+        JLabel etapa = new JLabel("Avance 04 - Tarifas, servicios y pagos (sin archivos CSV)");
         etapa.setForeground(GRIS_TEXTO);
         etapa.setFont(new Font("SansSerif", Font.ITALIC, 13));
         inicio.add(etapa, BorderLayout.SOUTH);
@@ -301,6 +310,96 @@ public class VentanaPrincipal extends JFrame {
         } catch (DateTimeParseException | IllegalArgumentException error) {
             mensaje.setForeground(new Color(255, 175, 175));
             mensaje.setText("Dato incorrecto: " + error.getMessage());
+        }
+    }
+
+    /** Muestra los saldos de las reservas y permite registrar abonos de prueba. */
+    private JPanel crearPanelPagos() {
+        JPanel panel = new JPanel(new BorderLayout(0, 12));
+        panel.setBackground(AZUL_FONDO);
+        JPanel formularios = new JPanel(new GridLayout(2, 1, 0, 8));
+        formularios.setBackground(AZUL_FONDO);
+
+        JPanel pago = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        pago.setBackground(AZUL_MENU);
+        JComboBox<String> selectorPago = crearSelectorReservas();
+        JTextField monto = new JTextField("100.00", 8);
+        JComboBox<MetodoPago> metodo = new JComboBox<>(MetodoPago.values());
+        JButton botonPago = new JButton("Registrar abono");
+        pago.add(etiqueta("Reserva:")); pago.add(selectorPago);
+        pago.add(etiqueta("Monto Q:")); pago.add(monto);
+        pago.add(metodo); pago.add(botonPago);
+        formularios.add(pago);
+
+        JPanel adicionales = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        adicionales.setBackground(AZUL_MENU);
+        JComboBox<String> selectorServicio = crearSelectorReservas();
+        JComboBox<ServicioAdicional> serviciosCombo = new JComboBox<>(catalogoServicios.toArray(new ServicioAdicional[0]));
+        JButton botonServicio = new JButton("Agregar servicio");
+        adicionales.add(etiqueta("Reserva:")); adicionales.add(selectorServicio);
+        adicionales.add(etiqueta("Servicio:")); adicionales.add(serviciosCombo);
+        adicionales.add(botonServicio);
+        formularios.add(adicionales);
+        panel.add(formularios, BorderLayout.NORTH);
+
+        tablaPagos = new DefaultTableModel(
+                new String[] {"Reserva", "Cliente", "Cancha Q", "Servicios Q", "Total Q", "Pagado Q", "Saldo Q"}, 0) {
+            @Override public boolean isCellEditable(int fila, int columna) { return false; }
+        };
+        JTable tabla = new JTable(tablaPagos);
+        tabla.setRowHeight(30);
+        tabla.setBackground(AZUL_MENU);
+        tabla.setForeground(BLANCO);
+        tabla.setGridColor(AZUL_CLARO);
+        tabla.getTableHeader().setForeground(Color.BLACK);
+        panel.add(new JScrollPane(tabla), BorderLayout.CENTER);
+        actualizarTablaPagos();
+        JLabel aviso = etiqueta("DATOS DE EJEMPLO - los pagos se pierden al cerrar el programa");
+        panel.add(aviso, BorderLayout.SOUTH);
+
+        botonPago.addActionListener(e -> {
+            try {
+                Reserva r = reservas.get(selectorPago.getSelectedIndex());
+                BigDecimal cantidad = new BigDecimal(monto.getText().trim());
+                String codigo = "P" + String.format("%03d", r.getPagos().size() + 1);
+                r.registrarPago(new Pago(codigo, cantidad, (MetodoPago) metodo.getSelectedItem(), "Abono desde la interfaz"));
+                actualizarTablaPagos();
+                JOptionPane.showMessageDialog(this, "Pago registrado. Saldo: Q" + r.getSaldo());
+            } catch (IllegalArgumentException | IllegalStateException error) {
+                JOptionPane.showMessageDialog(this, error.getMessage(), "Pago no aceptado", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        botonServicio.addActionListener(e -> {
+            try {
+                Reserva r = reservas.get(selectorServicio.getSelectedIndex());
+                r.agregarServicio((ServicioAdicional) serviciosCombo.getSelectedItem());
+                actualizarTablaPagos();
+                JOptionPane.showMessageDialog(this, "Servicio agregado. Total: Q" + r.getTotal());
+            } catch (IllegalArgumentException | IllegalStateException error) {
+                JOptionPane.showMessageDialog(this, error.getMessage(), "Servicio no aceptado", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        return panel;
+    }
+
+    private JLabel etiqueta(String texto) {
+        JLabel etiqueta = new JLabel(texto);
+        etiqueta.setForeground(GRIS_TEXTO);
+        return etiqueta;
+    }
+
+    private JComboBox<String> crearSelectorReservas() {
+        JComboBox<String> combo = new JComboBox<>();
+        for (Reserva r : reservas) combo.addItem(r.getCodigo());
+        return combo;
+    }
+
+    private void actualizarTablaPagos() {
+        tablaPagos.setRowCount(0);
+        for (Reserva r : reservas) {
+            BigDecimal costoServicios = r.getTotal().subtract(r.getCostoCancha());
+            tablaPagos.addRow(new Object[] {r.getCodigo(), r.getCliente().getNombre(),
+                r.getCostoCancha(), costoServicios, r.getTotal(), r.getPagado(), r.getSaldo()});
         }
     }
 

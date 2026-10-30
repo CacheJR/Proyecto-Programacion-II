@@ -25,7 +25,33 @@ class Reserva {
   - estado: EstadoReserva
   + confirmar(): void
   + cancelar(motivo, operador): void
+  + agregarServicio(servicio): void
+  + registrarPago(pago): void
+  + getTotal(): BigDecimal
+  + getSaldo(): BigDecimal
 }
+class Pago {
+  - codigo: String
+  - monto: BigDecimal
+  - fechaHora: LocalDateTime
+  - metodo: MetodoPago
+}
+class ServicioAdicional {
+  - codigo: String
+  - nombre: String
+  - precio: BigDecimal
+}
+class CalculadoraTarifas {
+  + tarifaPorHora(fecha, inicio): BigDecimal
+  + costoCancha(fecha, inicio, minutos): BigDecimal
+}
+enum MetodoPago {
+  EFECTIVO
+  TRANSFERENCIA
+  TARJETA
+}
+Pago --> MetodoPago
+Reserva ..> CalculadoraTarifas
 class ServicioDisponibilidad {
   - canchas: List<Cancha>
   - reservas: List<Reserva>
@@ -54,6 +80,8 @@ Cliente "1" <-- "0..*" Reserva : cliente
 Cancha "1" <-- "0..*" Reserva : cancha
 Cancha --> EstadoCancha
 Cancha --> TipoCancha
+Reserva "1" o-- "0..*" Pago : abonos
+Reserva "1" o-- "0..*" ServicioAdicional : servicios
 Reserva --> EstadoReserva
 ServicioDisponibilidad --> "0..*" Cancha
 ServicioDisponibilidad --> "0..*" Reserva
