@@ -10,9 +10,14 @@ public class Cliente {
     private final LocalDate fechaRegistro;
 
     public Cliente(String codigo, String nombre, String telefono, String correo) {
+        this(codigo, nombre, telefono, correo, LocalDate.now());
+    }
+
+    /** Constructor usado al leer el CSV, conserva la fecha original. */
+    public Cliente(String codigo, String nombre, String telefono, String correo, LocalDate fechaRegistro) {
         this.codigo = validarTexto(codigo, "Codigo");
         this.nombre = validarTexto(nombre, "Nombre");
-        this.fechaRegistro = LocalDate.now();
+        this.fechaRegistro = java.util.Objects.requireNonNull(fechaRegistro);
         actualizarContacto(telefono, correo);
     }
 

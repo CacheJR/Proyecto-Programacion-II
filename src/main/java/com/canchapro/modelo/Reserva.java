@@ -28,6 +28,11 @@ public class Reserva {
 
     public Reserva(String codigo, Cliente cliente, Cancha cancha, LocalDate fecha,
                    LocalTime horaInicio, int duracionMinutos) {
+        this(codigo, cliente, cancha, fecha, horaInicio, duracionMinutos, false);
+    }
+
+    private Reserva(String codigo, Cliente cliente, Cancha cancha, LocalDate fecha,
+                    LocalTime horaInicio, int duracionMinutos, boolean recuperando) {
         if (codigo == null || codigo.isBlank()) {
             throw new IllegalArgumentException("Codigo de reserva obligatorio");
         }
@@ -43,7 +48,7 @@ public class Reserva {
             throw new IllegalArgumentException("La reserva no puede pasar de medianoche");
         }
         this.horaFin = fin.toLocalTime();
-        if (cancha.getEstado() != EstadoCancha.DISPONIBLE) {
+        if (!recuperando && cancha.getEstado() != EstadoCancha.DISPONIBLE) {
             throw new IllegalArgumentException("La cancha esta fuera de servicio");
         }
         if (horaInicio.isBefore(cancha.getHoraApertura()) || horaFin.isAfter(cancha.getHoraCierre())) {
@@ -52,6 +57,37 @@ public class Reserva {
         this.codigo = codigo.trim();
         this.duracionMinutos = duracionMinutos;
         this.estado = EstadoReserva.PENDIENTE;
+    }
+
+    /** Reconstruye una reserva historica y sus relaciones desde los CSV.
+     * No utiliza los metodos de transicion de estados, porque un registro
+     * historico puede estar FINALIZADO o la cancha ahora en mantenimiento.
+     */
+    public static Reserva recuperar(String codigo, Cliente cliente, Cancha cancha,
+            LocalDate fecha, LocalTime inicio, int minutos, EstadoReserva estado,
+            LocalDateTime canceladaEn, String motivo, String operador,
+            List<ServicioAdicional> serviciosGuardados, List<Pago> pagosGuardados) {
+        Reserva r = new Reserva(codigo, cliente, cancha, fecha, inicio, minutos, true);
+        for (ServicioAdicional servicio : serviciosGuardados) {
+            r.agregarServicio(servicio);
+        }
+        for (Pago pago : pagosGuardados) {
+            r.registrarPago(pago);
+        }
+        r.estado = Objects.requireNonNull(estado);
+        if (estado == EstadoReserva.CANCELADA) {
+            if (canceladaEn == null || motivo == null || motivo.isBlank()
+                    || operador == null || operador.isBlank()) {
+                throw new IllegalArgumentException("Cancelacion sin datos del historial");
+            }
+            r.fechaCancelacion = canceladaEn;
+            r.motivoCancelacion = motivo;
+            r.operadorCancelacion = operador;
+        } else if (canceladaEn != null || (motivo != null && !motivo.isBlank())
+                || (operador != null && !operador.isBlank())) {
+            throw new IllegalArgumentException("Datos de cancelacion en reserva no cancelada");
+        }
+        return r;
     }
 
     public void confirmar() {

@@ -14,6 +14,12 @@ public class Pago {
     private final String observacion;
 
     public Pago(String codigo, BigDecimal monto, MetodoPago metodo, String observacion) {
+        this(codigo, monto, metodo, observacion, LocalDateTime.now());
+    }
+
+    /** Reutilizado por el lector CSV para respetar la fecha y hora guardadas. */
+    public Pago(String codigo, BigDecimal monto, MetodoPago metodo,
+                String observacion, LocalDateTime fechaHora) {
         if (codigo == null || codigo.isBlank()) {
             throw new IllegalArgumentException("Codigo de pago obligatorio");
         }
@@ -24,7 +30,7 @@ public class Pago {
         this.monto = monto.setScale(2, RoundingMode.HALF_UP);
         this.metodo = Objects.requireNonNull(metodo, "Metodo de pago obligatorio");
         this.observacion = observacion == null ? "" : observacion.trim();
-        this.fechaHora = LocalDateTime.now();
+        this.fechaHora = Objects.requireNonNull(fechaHora);
     }
 
     public String getCodigo() { return codigo; }

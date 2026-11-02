@@ -1,6 +1,9 @@
 package com.canchapro.ui;
 
-import com.canchapro.DatosEjemplo;
+import com.canchapro.DatosSistema;
+import com.canchapro.persistencia.ArchivosCSV;
+import java.nio.file.Path;
+import java.io.IOException;
 import com.canchapro.modelo.Cancha;
 import com.canchapro.modelo.Cliente;
 import com.canchapro.modelo.Reserva;
@@ -37,10 +40,11 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 /**
- * Avance 03: consulta de disponibilidad y tablas de ejemplo en memoria.
- * Los formularios y el guardado de datos todavia estan pendientes.
+ * Avance 05: pantalla con reservas, pagos y datos guardados en CSV.
+ * Los formularios CRUD completos son del siguiente avance.
  */
 public class VentanaPrincipal extends JFrame {
+
     private static final Color AZUL_FONDO = new Color(15, 30, 48);
     private static final Color AZUL_MENU = new Color(21, 43, 67);
     private static final Color AZUL_CLARO = new Color(36, 75, 111);
@@ -48,23 +52,40 @@ public class VentanaPrincipal extends JFrame {
     private static final Color GRIS_TEXTO = new Color(184, 200, 217);
 
     private static final String[][] MODULOS = {
-        {"Inicio", "INICIO"}, {"Clientes", "CLIENTES"},
-        {"Canchas", "CANCHAS"}, {"Disponibilidad", "DISPONIBILIDAD"},
-        {"Reservas", "RESERVAS"}, {"Pagos", "PAGOS"},
-        {"Reportes", "REPORTES"}, {"Configuracion", "CONFIGURACION"}
+        {"Inicio", "INICIO"},
+        {"Clientes", "CLIENTES"},
+        {"Canchas", "CANCHAS"},
+        {"Disponibilidad", "DISPONIBILIDAD"},
+        {"Reservas", "RESERVAS"},
+        {"Pagos", "PAGOS"},
+        {"Reportes", "REPORTES"},
+        {"Configuracion", "CONFIGURACION"}
     };
 
-    private final List<Cliente> clientes = DatosEjemplo.crearClientes();
-    private final List<Cancha> canchas = DatosEjemplo.crearCanchas();
-    private final List<Reserva> reservas = DatosEjemplo.crearReservas(clientes, canchas);
-    private final List<ServicioAdicional> catalogoServicios = DatosEjemplo.crearServicios();
+    private final ArchivosCSV archivos = new ArchivosCSV(Path.of("datos"));
+    private final DatosSistema datos;
+    private final List<Cliente> clientes;
+    private final List<Cancha> canchas;
+    private final List<Reserva> reservas;
+    private final List<ServicioAdicional> catalogoServicios;
     private DefaultTableModel tablaPagos;
-    private final ServicioDisponibilidad servicio = new ServicioDisponibilidad(canchas, reservas);
+    private final ServicioDisponibilidad servicio;
     private final CardLayout tarjetas = new CardLayout();
     private final JPanel panelPantallas = new JPanel(tarjetas);
     private final JLabel tituloVista = new JLabel("Inicio");
 
     public VentanaPrincipal() {
+        try {
+            datos = archivos.cargarOIniciar();
+        } catch (IOException error) {
+            throw new IllegalStateException("No se pudieron leer los archivos de datos. "
+                    + "Revise la carpeta 'datos': " + error.getMessage(), error);
+        }
+        clientes = datos.getClientes();
+        canchas = datos.getCanchas();
+        reservas = datos.getReservas();
+        catalogoServicios = datos.getServicios();
+        servicio = new ServicioDisponibilidad(canchas, reservas);
         setTitle("CanchaPro | Complejo Deportivo La 10");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1120, 720);
@@ -86,12 +107,15 @@ public class VentanaPrincipal extends JFrame {
         JPanel encabezado = new JPanel(new BorderLayout());
         encabezado.setBackground(AZUL_CLARO);
         encabezado.setBorder(BorderFactory.createEmptyBorder(20, 28, 20, 28));
+
         JLabel nombre = new JLabel("CANCHAPRO");
         nombre.setForeground(BLANCO);
         nombre.setFont(new Font("SansSerif", Font.BOLD, 26));
+
         JLabel descripcion = new JLabel("Sistema de gestion y reservas | La 10");
         descripcion.setForeground(GRIS_TEXTO);
         descripcion.setFont(new Font("SansSerif", Font.PLAIN, 14));
+
         encabezado.add(nombre, BorderLayout.WEST);
         encabezado.add(descripcion, BorderLayout.EAST);
         return encabezado;
@@ -103,6 +127,7 @@ public class VentanaPrincipal extends JFrame {
         menu.setBackground(AZUL_MENU);
         menu.setBorder(BorderFactory.createEmptyBorder(20, 14, 20, 14));
         menu.setPreferredSize(new Dimension(230, 0));
+
         for (String[] modulo : MODULOS) {
             menu.add(crearBotonMenu(modulo[0], modulo[1]));
             menu.add(Box.createVerticalStrut(10));
@@ -127,9 +152,11 @@ public class VentanaPrincipal extends JFrame {
         JPanel contenido = new JPanel(new BorderLayout(0, 18));
         contenido.setBackground(AZUL_FONDO);
         contenido.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+
         tituloVista.setForeground(BLANCO);
         tituloVista.setFont(new Font("SansSerif", Font.BOLD, 25));
         contenido.add(tituloVista, BorderLayout.NORTH);
+
         panelPantallas.setBackground(AZUL_FONDO);
         panelPantallas.add(crearPanelInicio(), "INICIO");
         for (String[] modulo : MODULOS) {
@@ -138,6 +165,7 @@ public class VentanaPrincipal extends JFrame {
                 case "CANCHAS" -> panelPantallas.add(crearPanelCanchas(), "CANCHAS");
                 case "RESERVAS" -> panelPantallas.add(crearPanelReservas(), "RESERVAS");
                 case "PAGOS" -> panelPantallas.add(crearPanelPagos(), "PAGOS");
+                case "CONFIGURACION" -> panelPantallas.add(crearPanelConfiguracion(), "CONFIGURACION");
                 case "DISPONIBILIDAD" -> panelPantallas.add(crearPanelDisponibilidad(), "DISPONIBILIDAD");
                 case "INICIO" -> { }
                 default -> panelPantallas.add(crearPanelPendiente(modulo[0]), modulo[1]);
@@ -150,10 +178,12 @@ public class VentanaPrincipal extends JFrame {
     private JPanel crearPanelInicio() {
         JPanel inicio = new JPanel(new BorderLayout(0, 20));
         inicio.setBackground(AZUL_FONDO);
+
         JLabel bienvenida = new JLabel("Bienvenido al Complejo Deportivo La 10");
         bienvenida.setForeground(GRIS_TEXTO);
         bienvenida.setFont(new Font("SansSerif", Font.PLAIN, 18));
         inicio.add(bienvenida, BorderLayout.NORTH);
+
         JPanel resumen = new JPanel(new GridLayout(2, 2, 16, 16));
         resumen.setBackground(AZUL_FONDO);
         resumen.add(crearTarjeta("Clientes", clientes.size() + " ejemplos"));
@@ -161,7 +191,8 @@ public class VentanaPrincipal extends JFrame {
         resumen.add(crearTarjeta("Reservas", reservas.size() + " ejemplos"));
         resumen.add(crearTarjeta("Pagos", "Abonos y saldos"));
         inicio.add(resumen, BorderLayout.CENTER);
-        JLabel etapa = new JLabel("Avance 04 - Tarifas, servicios y pagos (sin archivos CSV)");
+
+        JLabel etapa = new JLabel("Avance 05 - CSV: datos recuperados al iniciar el programa");
         etapa.setForeground(GRIS_TEXTO);
         etapa.setFont(new Font("SansSerif", Font.ITALIC, 13));
         inicio.add(etapa, BorderLayout.SOUTH);
@@ -172,12 +203,14 @@ public class VentanaPrincipal extends JFrame {
         JPanel tarjeta = new JPanel(new BorderLayout(0, 12));
         tarjeta.setBackground(AZUL_MENU);
         tarjeta.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
+
         JLabel nombre = new JLabel(titulo);
         nombre.setForeground(BLANCO);
         nombre.setFont(new Font("SansSerif", Font.BOLD, 21));
         JLabel detalle = new JLabel(subtitulo);
         detalle.setForeground(GRIS_TEXTO);
         detalle.setFont(new Font("SansSerif", Font.PLAIN, 14));
+
         tarjeta.add(nombre, BorderLayout.NORTH);
         tarjeta.add(detalle, BorderLayout.CENTER);
         return tarjeta;
@@ -217,7 +250,7 @@ public class VentanaPrincipal extends JFrame {
     private JPanel crearTabla(String[] columnas, Object[][] filas) {
         JPanel panel = new JPanel(new BorderLayout(0, 15));
         panel.setBackground(AZUL_FONDO);
-        JLabel aviso = new JLabel("DATOS DE EJEMPLO - no se pueden editar ni guardar todavia");
+        JLabel aviso = new JLabel("Registros leidos de los CSV. Los formularios de clientes y reservas siguen pendientes.");
         aviso.setForeground(GRIS_TEXTO);
         panel.add(aviso, BorderLayout.NORTH);
         DefaultTableModel modelo = new DefaultTableModel(filas, columnas) {
@@ -354,7 +387,7 @@ public class VentanaPrincipal extends JFrame {
         tabla.getTableHeader().setForeground(Color.BLACK);
         panel.add(new JScrollPane(tabla), BorderLayout.CENTER);
         actualizarTablaPagos();
-        JLabel aviso = etiqueta("DATOS DE EJEMPLO - los pagos se pierden al cerrar el programa");
+        JLabel aviso = etiqueta("Los servicios y pagos se guardan automaticamente en la carpeta datos");
         panel.add(aviso, BorderLayout.SOUTH);
 
         botonPago.addActionListener(e -> {
@@ -364,6 +397,7 @@ public class VentanaPrincipal extends JFrame {
                 String codigo = "P" + String.format("%03d", r.getPagos().size() + 1);
                 r.registrarPago(new Pago(codigo, cantidad, (MetodoPago) metodo.getSelectedItem(), "Abono desde la interfaz"));
                 actualizarTablaPagos();
+                guardarCambios();
                 JOptionPane.showMessageDialog(this, "Pago registrado. Saldo: Q" + r.getSaldo());
             } catch (IllegalArgumentException | IllegalStateException error) {
                 JOptionPane.showMessageDialog(this, error.getMessage(), "Pago no aceptado", JOptionPane.ERROR_MESSAGE);
@@ -374,11 +408,47 @@ public class VentanaPrincipal extends JFrame {
                 Reserva r = reservas.get(selectorServicio.getSelectedIndex());
                 r.agregarServicio((ServicioAdicional) serviciosCombo.getSelectedItem());
                 actualizarTablaPagos();
+                guardarCambios();
                 JOptionPane.showMessageDialog(this, "Servicio agregado. Total: Q" + r.getTotal());
             } catch (IllegalArgumentException | IllegalStateException error) {
                 JOptionPane.showMessageDialog(this, error.getMessage(), "Servicio no aceptado", JOptionPane.ERROR_MESSAGE);
             }
         });
+        return panel;
+    }
+
+    /** Guarda los cambios sin permitir que un error de escritura pase inadvertido. */
+    private void guardarCambios() throws IllegalStateException {
+        try {
+            archivos.guardar(datos);
+        } catch (IOException error) {
+            throw new IllegalStateException("El cambio quedo en memoria pero NO se pudo guardar: "
+                    + error.getMessage(), error);
+        }
+    }
+
+    private JPanel crearPanelConfiguracion() {
+        JPanel panel = new JPanel(new BorderLayout(0, 18));
+        panel.setBackground(AZUL_FONDO);
+        JLabel ruta = new JLabel("Archivos CSV en: " + archivos.getCarpeta());
+        ruta.setForeground(BLANCO);
+        panel.add(ruta, BorderLayout.NORTH);
+        JButton guardar = new JButton("Guardar datos ahora");
+        guardar.addActionListener(e -> {
+            try {
+                guardarCambios();
+                JOptionPane.showMessageDialog(this, "Datos guardados correctamente.");
+            } catch (IllegalStateException error) {
+                JOptionPane.showMessageDialog(this, error.getMessage(),
+                    "Error de guardado", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        JPanel centro = new JPanel(new BorderLayout());
+        centro.setBackground(AZUL_FONDO);
+        centro.add(guardar, BorderLayout.NORTH);
+        JLabel aviso = etiqueta("Los archivos se recargan cuando inicia el programa. No borrar ni editar mientras esta abierto.");
+        centro.add(aviso, BorderLayout.SOUTH);
+        panel.add(centro, BorderLayout.CENTER);
         return panel;
     }
 
@@ -407,6 +477,7 @@ public class VentanaPrincipal extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(AZUL_MENU);
         panel.setBorder(BorderFactory.createEmptyBorder(35, 35, 35, 35));
+
         JLabel aviso = new JLabel("Modulo " + modulo + " - Se implementara en siguientes avances");
         aviso.setFont(new Font("SansSerif", Font.PLAIN, 18));
         aviso.setForeground(BLANCO);

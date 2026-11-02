@@ -85,4 +85,23 @@ Reserva "1" o-- "0..*" ServicioAdicional : servicios
 Reserva --> EstadoReserva
 ServicioDisponibilidad --> "0..*" Cancha
 ServicioDisponibilidad --> "0..*" Reserva
+class DatosSistema {
+  - clientes: List<Cliente>
+  - canchas: List<Cancha>
+  - servicios: List<ServicioAdicional>
+  - reservas: List<Reserva>
+  + getClientes(): List<Cliente>
+  + getReservas(): List<Reserva>
+}
+class ArchivosCSV {
+  - carpeta: Path
+  + cargarOIniciar(): DatosSistema
+  + cargar(): DatosSistema
+  + guardar(datos: DatosSistema): void
+}
+ArchivosCSV ..> DatosSistema : lee / escribe
+DatosSistema --> Cliente
+DatosSistema --> Cancha
+DatosSistema --> Reserva
+DatosSistema --> ServicioAdicional
 @enduml

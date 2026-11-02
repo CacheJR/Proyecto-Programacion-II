@@ -6,3 +6,6 @@ nbproject/private/
 *.log
 .DS_Store
 Thumbs.db
+
+# Archivos locales generados por el programa
+datos/
