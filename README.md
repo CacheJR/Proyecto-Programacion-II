@@ -1,23 +1,38 @@
 # CanchaPro
 
-Proyecto de Programacion 2 en Java (NetBeans y Swing).
+Proyecto final de Programacion 2 con Java 17, Swing y Maven. Los datos se guardan en archivos CSV y no se usa base de datos.
 
 ## Avances
-1. Ventana principal y menu.
-2. Clases Cliente, Cancha y Reserva.
-3. Consulta de horarios disponibles.
-4. Tarifas, servicios y pagos.
-5. Guardado y recuperacion de datos CSV.
 
-## Ejecutar
-Abrir como proyecto Maven en NetBeans (Java 17 o superior) y ejecutar `Main.java`.
+1. Ventana principal y navegacion.
+2. Modelo Cliente, Cancha y Reserva.
+3. Consulta de disponibilidad y conflictos de horarios.
+4. Tarifas, servicios adicionales y pagos.
+5. Lectura y escritura de archivos CSV.
+6. Formularios para registrar, buscar y editar clientes, agregar canchas, cambiar su estado, crear y cancelar reservas.
 
-En el primer inicio se crea una carpeta **datos/** con registros de ejemplo. Al volver a iniciar se cargan esos archivos en vez de crear registros nuevos. Los servicios y abonos que se registren desde el menu Pagos se guardan al momento. En Configuracion se puede ver la ruta y guardar manualmente.
+## Ejecutar en NetBeans
 
-Archivos: `clientes.csv`, `canchas.csv`, `servicios.csv`, `reservas.csv`, `reserva_servicios.csv`, `pagos.csv`.
+Abrir este directorio como proyecto Maven y ejecutar `Main.java`.
 
-Para hacer una prueba: entrar a Pagos, seleccionar R002, agregar Balon y un abono de Q100, cerrar la aplicacion y abrirla de nuevo. Los cambios deberian permanecer. No editar manualmente los CSV mientras el programa esta abierto.
+En el primer inicio se crean los datos de ejemplo en la carpeta `datos/`. Al cerrar y abrir el programa, los registros guardados se vuelven a cargar.
 
-Ejecutar las clases `PruebasDisponibilidad`, `PruebasPagos` y `PruebasArchivosCSV` desde NetBeans para verificar el proyecto.
+## Probar el avance 06
 
-**Pendiente:** formularios para agregar y editar clientes, canchas y reservas; reportes; configuracion de tarifas desde archivo. Las tarifas de esta fase siguen definidas en Java. Si alguno de los CSV esta danado o falta, el inicio mostrara un error en lugar de sobreescribir los datos.
+1. En **Clientes**, registrar un cliente de prueba. Usar **Buscar** por codigo, nombre o telefono. Seleccionar el cliente y elegir **Editar seleccionado**.
+2. En **Canchas**, registrar una cancha o cambiar su estado a MANTENIMIENTO.
+3. En **Reservas**, seleccionar un cliente y una cancha, indicar fecha, hora y minutos. Si la cancha esta libre se crea la reserva; si hay conflicto se rechaza.
+4. Seleccionar una reserva pendiente o confirmada y usar **Cancelar seleccionada**, indicando motivo y responsable.
+5. Cerrar y abrir CanchaPro para verificar que los cambios permanecen.
+
+En **Pagos** continuan disponibles los servicios y abonos de los avances anteriores.
+
+## Pruebas
+
+Ejecutar con **Run File** las clases `PruebasDisponibilidad`, `PruebasPagos`, `PruebasArchivosCSV`, `PruebasFormularios` y `PruebasInterfaz`. La ultima necesita un entorno grafico.
+
+## Pendiente
+
+Reportes agrupados, configuracion de tarifas desde CSV, formularios para editar todos los campos de cancha y mejoras del flujo completo de reserva con servicios y pagos en un solo formulario.
+
+Nota: el precio base almacenado en cada cancha no modifica todavia la tarifa calculada; se usan las tarifas generales segun dia y hora. Guardar CSV no equivale a una transaccion de base de datos: para uso real conviene anadir copias de seguridad.

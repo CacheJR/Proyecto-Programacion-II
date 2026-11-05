@@ -1,6 +1,7 @@
 package com.canchapro.ui;
 
 import com.canchapro.DatosSistema;
+import com.canchapro.servicio.GestionRegistros;
 import com.canchapro.persistencia.ArchivosCSV;
 import java.nio.file.Path;
 import java.io.IOException;
@@ -40,8 +41,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 /**
- * Avance 05: pantalla con reservas, pagos y datos guardados en CSV.
- * Los formularios CRUD completos son del siguiente avance.
+ * Avance 06: formularios de clientes, canchas y reservas, con CSV.
  */
 public class VentanaPrincipal extends JFrame {
 
@@ -70,6 +70,8 @@ public class VentanaPrincipal extends JFrame {
     private final List<ServicioAdicional> catalogoServicios;
     private DefaultTableModel tablaPagos;
     private final ServicioDisponibilidad servicio;
+    private final GestionRegistros gestion;
+    private final PanelesGestion panelesGestion;
     private final CardLayout tarjetas = new CardLayout();
     private final JPanel panelPantallas = new JPanel(tarjetas);
     private final JLabel tituloVista = new JLabel("Inicio");
@@ -86,6 +88,8 @@ public class VentanaPrincipal extends JFrame {
         reservas = datos.getReservas();
         catalogoServicios = datos.getServicios();
         servicio = new ServicioDisponibilidad(canchas, reservas);
+        gestion = new GestionRegistros(datos, archivos);
+        panelesGestion = new PanelesGestion(this, datos, gestion);
         setTitle("CanchaPro | Complejo Deportivo La 10");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1120, 720);
@@ -159,18 +163,6 @@ public class VentanaPrincipal extends JFrame {
 
         panelPantallas.setBackground(AZUL_FONDO);
         panelPantallas.add(crearPanelInicio(), "INICIO");
-        for (String[] modulo : MODULOS) {
-            switch (modulo[1]) {
-                case "CLIENTES" -> panelPantallas.add(crearPanelClientes(), "CLIENTES");
-                case "CANCHAS" -> panelPantallas.add(crearPanelCanchas(), "CANCHAS");
-                case "RESERVAS" -> panelPantallas.add(crearPanelReservas(), "RESERVAS");
-                case "PAGOS" -> panelPantallas.add(crearPanelPagos(), "PAGOS");
-                case "CONFIGURACION" -> panelPantallas.add(crearPanelConfiguracion(), "CONFIGURACION");
-                case "DISPONIBILIDAD" -> panelPantallas.add(crearPanelDisponibilidad(), "DISPONIBILIDAD");
-                case "INICIO" -> { }
-                default -> panelPantallas.add(crearPanelPendiente(modulo[0]), modulo[1]);
-            }
-        }
         contenido.add(panelPantallas, BorderLayout.CENTER);
         return contenido;
     }
@@ -186,13 +178,13 @@ public class VentanaPrincipal extends JFrame {
 
         JPanel resumen = new JPanel(new GridLayout(2, 2, 16, 16));
         resumen.setBackground(AZUL_FONDO);
-        resumen.add(crearTarjeta("Clientes", clientes.size() + " ejemplos"));
-        resumen.add(crearTarjeta("Canchas", canchas.size() + " ejemplos"));
-        resumen.add(crearTarjeta("Reservas", reservas.size() + " ejemplos"));
+        resumen.add(crearTarjeta("Clientes", clientes.size() + " registrados"));
+        resumen.add(crearTarjeta("Canchas", canchas.size() + " registradas"));
+        resumen.add(crearTarjeta("Reservas", reservas.size() + " registradas"));
         resumen.add(crearTarjeta("Pagos", "Abonos y saldos"));
         inicio.add(resumen, BorderLayout.CENTER);
 
-        JLabel etapa = new JLabel("Avance 05 - CSV: datos recuperados al iniciar el programa");
+        JLabel etapa = new JLabel("Avance 06 - Formularios para clientes, canchas y reservas");
         etapa.setForeground(GRIS_TEXTO);
         etapa.setFont(new Font("SansSerif", Font.ITALIC, 13));
         inicio.add(etapa, BorderLayout.SOUTH);
@@ -214,60 +206,6 @@ public class VentanaPrincipal extends JFrame {
         tarjeta.add(nombre, BorderLayout.NORTH);
         tarjeta.add(detalle, BorderLayout.CENTER);
         return tarjeta;
-    }
-
-    private JPanel crearPanelClientes() {
-        Object[][] filas = new Object[clientes.size()][5];
-        for (int i = 0; i < clientes.size(); i++) {
-            Cliente c = clientes.get(i);
-            filas[i] = new Object[] { c.getCodigo(), c.getNombre(), c.getTelefono(),
-                c.getCorreo(), c.getFechaRegistro() };
-        }
-        return crearTabla(new String[] { "Codigo", "Nombre", "Telefono", "Correo", "Registro" }, filas);
-    }
-
-    private JPanel crearPanelCanchas() {
-        Object[][] filas = new Object[canchas.size()][6];
-        for (int i = 0; i < canchas.size(); i++) {
-            Cancha c = canchas.get(i);
-            filas[i] = new Object[] { c.getCodigo(), c.getNombre(), c.getTipo(),
-                c.getCapacidad(), c.getPrecioBase(), c.getEstado() };
-        }
-        return crearTabla(new String[] { "Codigo", "Cancha", "Tipo", "Capacidad", "Base Q", "Estado" }, filas);
-    }
-
-    private JPanel crearPanelReservas() {
-        Object[][] filas = new Object[reservas.size()][7];
-        for (int i = 0; i < reservas.size(); i++) {
-            Reserva r = reservas.get(i);
-            filas[i] = new Object[] { r.getCodigo(), r.getCliente().getNombre(),
-                r.getCancha().getNombre(), r.getFecha(), r.getHoraInicio(),
-                r.getHoraFin(), r.getEstado() };
-        }
-        return crearTabla(new String[] { "Codigo", "Cliente", "Cancha", "Fecha", "Inicio", "Fin", "Estado" }, filas);
-    }
-
-    private JPanel crearTabla(String[] columnas, Object[][] filas) {
-        JPanel panel = new JPanel(new BorderLayout(0, 15));
-        panel.setBackground(AZUL_FONDO);
-        JLabel aviso = new JLabel("Registros leidos de los CSV. Los formularios de clientes y reservas siguen pendientes.");
-        aviso.setForeground(GRIS_TEXTO);
-        panel.add(aviso, BorderLayout.NORTH);
-        DefaultTableModel modelo = new DefaultTableModel(filas, columnas) {
-            @Override
-            public boolean isCellEditable(int fila, int columna) { return false; }
-        };
-        JTable tabla = new JTable(modelo);
-        tabla.setRowHeight(30);
-        tabla.setBackground(AZUL_MENU);
-        tabla.setForeground(BLANCO);
-        tabla.setGridColor(AZUL_CLARO);
-        tabla.setSelectionBackground(AZUL_CLARO);
-        tabla.getTableHeader().setBackground(AZUL_CLARO);
-        tabla.getTableHeader().setForeground(Color.BLACK);
-        tabla.setFillsViewportHeight(true);
-        panel.add(new JScrollPane(tabla), BorderLayout.CENTER);
-        return panel;
     }
 
     /** Pantalla que consulta el motor; no decide los horarios manualmente. */
@@ -487,7 +425,21 @@ public class VentanaPrincipal extends JFrame {
     }
 
     private void mostrarPantalla(String identificador, String nombre) {
+        JPanel pantalla = switch (identificador) {
+            case "INICIO" -> crearPanelInicio();
+            case "CLIENTES" -> panelesGestion.crearClientes();
+            case "CANCHAS" -> panelesGestion.crearCanchas();
+            case "RESERVAS" -> panelesGestion.crearReservas();
+            case "DISPONIBILIDAD" -> crearPanelDisponibilidad();
+            case "PAGOS" -> crearPanelPagos();
+            case "CONFIGURACION" -> crearPanelConfiguracion();
+            default -> crearPanelPendiente(nombre);
+        };
+        panelPantallas.removeAll();
+        panelPantallas.add(pantalla, identificador);
         tarjetas.show(panelPantallas, identificador);
         tituloVista.setText(nombre);
+        panelPantallas.revalidate();
+        panelPantallas.repaint();
     }
 }

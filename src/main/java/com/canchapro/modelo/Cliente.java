@@ -38,6 +38,10 @@ public class Cliente {
         this.correo = nuevoCorreo;
     }
 
+    public void actualizarNombre(String nuevoNombre) {
+        this.nombre = validarTexto(nuevoNombre, "Nombre");
+    }
+
     public String getCodigo() { return codigo; }
     public String getNombre() { return nombre; }
     public String getTelefono() { return telefono; }

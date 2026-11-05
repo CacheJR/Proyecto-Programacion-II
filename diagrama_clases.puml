@@ -5,6 +5,7 @@ class Cliente {
   - nombre: String
   - telefono: String
   + actualizarContacto(telefono, correo): void
+  + actualizarNombre(nombre): void
 }
 class Cancha {
   - codigo: String
@@ -85,6 +86,27 @@ Reserva "1" o-- "0..*" ServicioAdicional : servicios
 Reserva --> EstadoReserva
 ServicioDisponibilidad --> "0..*" Cancha
 ServicioDisponibilidad --> "0..*" Reserva
+class GestionRegistros {
+  - datos: DatosSistema
+  - archivos: ArchivosCSV
+  - disponibilidad: ServicioDisponibilidad
+  + buscarClientes(consulta): List<Cliente>
+  + registrarCliente(codigo, nombre, telefono, correo): Cliente
+  + actualizarCliente(cliente, nombre, telefono, correo): void
+  + registrarCancha(codigo, nombre, tipo, capacidad, precio, estado, abre, cierra): Cancha
+  + cambiarEstadoCancha(cancha, estado): void
+  + registrarReserva(codigo, cliente, cancha, fecha, inicio, minutos): Reserva
+  + cancelarReserva(reserva, motivo, operador): void
+}
+class PanelesGestion {
+  + crearClientes(): JPanel
+  + crearCanchas(): JPanel
+  + crearReservas(): JPanel
+}
+PanelesGestion --> GestionRegistros
+GestionRegistros --> DatosSistema
+GestionRegistros --> ArchivosCSV
+GestionRegistros --> ServicioDisponibilidad
 class DatosSistema {
   - clientes: List<Cliente>
   - canchas: List<Cancha>
