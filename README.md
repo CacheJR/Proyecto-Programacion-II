@@ -35,3 +35,10 @@ Ejecutar **PruebasReportes.java** con Run File. Las pruebas antiguas de disponib
 - El reporte de ingresos se filtra por fecha de pago; los demas reportes usan fecha de la reserva, excepto cancelaciones.
 - El precio base de la cancha aun no reemplaza la tarifa general de `CalculadoraTarifas`.
 - Pendiente: configuracion de tarifas desde CSV, mejoras de captura y modulo opcional de tienda/cafeteria.
+
+## Manuales
+
+- [Manual de Usuario](manuales/Manual_de_Usuario.md): instalacion, uso de pantallas, reservas, pagos y errores frecuentes.
+- [Manual Tecnico](manuales/Manual_Tecnico.md): clases, metodos, CSV, reglas, UML y pruebas.
+
+Los manuales corresponden al Avance 07. Los reportes personales de estudio se entregan por separado y no se publican aqui.
