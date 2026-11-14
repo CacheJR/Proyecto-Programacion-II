@@ -1,38 +1,37 @@
 # CanchaPro
 
-Proyecto final de Programacion 2 con Java 17, Swing y Maven. Los datos se guardan en archivos CSV y no se usa base de datos.
+Proyecto final de Programacion 2 con Java 17, Swing y Maven. La informacion se guarda en archivos CSV, sin usar base de datos.
 
 ## Avances
-
 1. Ventana principal y navegacion.
 2. Modelo Cliente, Cancha y Reserva.
-3. Consulta de disponibilidad y conflictos de horarios.
-4. Tarifas, servicios adicionales y pagos.
-5. Lectura y escritura de archivos CSV.
-6. Formularios para registrar, buscar y editar clientes, agregar canchas, cambiar su estado, crear y cancelar reservas.
+3. Disponibilidad y deteccion de horarios traslapados.
+4. Tarifas, servicios y pagos.
+5. Guardado y recuperacion mediante CSV.
+6. Formularios para clientes, canchas y reservas.
+7. Reportes: reservas por fecha, por cancha, ingresos por periodo, pagos pendientes, cancelaciones, cancha mas usada, horarios de demanda y clientes frecuentes.
 
-## Ejecutar en NetBeans
+## Abrir en NetBeans
+Abrir la carpeta como proyecto Maven con Java 17 o superior. Ejecutar `Main.java`. El sistema carga los CSV de la carpeta `datos/`; si no existen en el primer inicio se crean datos de ejemplo.
 
-Abrir este directorio como proyecto Maven y ejecutar `Main.java`.
+## Probar la fase 07
+1. Entrar en **Reportes**.
+2. Elegir **Reservas por cancha** o **Clientes con mas reservas** y presionar **Consultar**.
+3. Cambiar fechas, cancha o estado para filtrar la informacion.
+4. Elegir **Ingresos por periodo**: se suman los pagos efectivamente registrados **por fecha de cobro**, no el total de todas las reservas.
+5. Elegir **Pagos pendientes** para comprobar las reservas con saldo mayor a cero.
+6. Elegir **Reservas canceladas**: el filtro de fechas corresponde al dia de cancelacion.
+7. En otros modulos, registrar un cliente o una reserva y regresar a Reportes para comprobar los cambios.
 
-En el primer inicio se crean los datos de ejemplo en la carpeta `datos/`. Al cerrar y abrir el programa, los registros guardados se vuelven a cargar.
-
-## Probar el avance 06
-
-1. En **Clientes**, registrar un cliente de prueba. Usar **Buscar** por codigo, nombre o telefono. Seleccionar el cliente y elegir **Editar seleccionado**.
-2. En **Canchas**, registrar una cancha o cambiar su estado a MANTENIMIENTO.
-3. En **Reservas**, seleccionar un cliente y una cancha, indicar fecha, hora y minutos. Si la cancha esta libre se crea la reserva; si hay conflicto se rechaza.
-4. Seleccionar una reserva pendiente o confirmada y usar **Cancelar seleccionada**, indicando motivo y responsable.
-5. Cerrar y abrir CanchaPro para verificar que los cambios permanecen.
-
-En **Pagos** continuan disponibles los servicios y abonos de los avances anteriores.
+Para que se vean los datos de ejemplo, al abrir la aplicacion se proponen fechas desde 7 dias atras hasta 30 dias adelante; se pueden cambiar.
 
 ## Pruebas
+Ejecutar **PruebasReportes.java** con Run File. Las pruebas antiguas de disponibilidad, pagos, CSV, formularios e interfaz se conservaron. `PruebasInterfaz` requiere entorno grafico.
 
-Ejecutar con **Run File** las clases `PruebasDisponibilidad`, `PruebasPagos`, `PruebasArchivosCSV`, `PruebasFormularios` y `PruebasInterfaz`. La ultima necesita un entorno grafico.
-
-## Pendiente
-
-Reportes agrupados, configuracion de tarifas desde CSV, formularios para editar todos los campos de cancha y mejoras del flujo completo de reserva con servicios y pagos en un solo formulario.
-
-Nota: el precio base almacenado en cada cancha no modifica todavia la tarifa calculada; se usan las tarifas generales segun dia y hora. Guardar CSV no equivale a una transaccion de base de datos: para uso real conviene anadir copias de seguridad.
+## Notas importantes
+- Se excluyen las reservas canceladas de ocupacion, rankings y saldos pendientes.
+- Una reserva cancelada puede conservar abonos cobrados: no existe devolucion automatica, por lo que esos pagos siguen apareciendo en ingresos.
+- Los horarios de demanda se cuentan por la **hora de inicio** de cada reserva, no por horas completas ocupadas.
+- El reporte de ingresos se filtra por fecha de pago; los demas reportes usan fecha de la reserva, excepto cancelaciones.
+- El precio base de la cancha aun no reemplaza la tarifa general de `CalculadoraTarifas`.
+- Pendiente: configuracion de tarifas desde CSV, mejoras de captura y modulo opcional de tienda/cafeteria.

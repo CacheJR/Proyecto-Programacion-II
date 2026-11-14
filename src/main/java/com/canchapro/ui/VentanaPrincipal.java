@@ -41,7 +41,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 /**
- * Avance 06: formularios de clientes, canchas y reservas, con CSV.
+ * Avance 07: formularios, persistencia y reportes con filtros.
  */
 public class VentanaPrincipal extends JFrame {
 
@@ -184,7 +184,7 @@ public class VentanaPrincipal extends JFrame {
         resumen.add(crearTarjeta("Pagos", "Abonos y saldos"));
         inicio.add(resumen, BorderLayout.CENTER);
 
-        JLabel etapa = new JLabel("Avance 06 - Formularios para clientes, canchas y reservas");
+        JLabel etapa = new JLabel("Avance 07 - Reportes con fechas, cancha y estado");
         etapa.setForeground(GRIS_TEXTO);
         etapa.setFont(new Font("SansSerif", Font.ITALIC, 13));
         inicio.add(etapa, BorderLayout.SOUTH);
@@ -433,6 +433,7 @@ public class VentanaPrincipal extends JFrame {
             case "DISPONIBILIDAD" -> crearPanelDisponibilidad();
             case "PAGOS" -> crearPanelPagos();
             case "CONFIGURACION" -> crearPanelConfiguracion();
+            case "REPORTES" -> new PanelReportes(datos);
             default -> crearPanelPendiente(nombre);
         };
         panelPantallas.removeAll();

@@ -126,4 +126,32 @@ DatosSistema --> Cliente
 DatosSistema --> Cancha
 DatosSistema --> Reserva
 DatosSistema --> ServicioAdicional
+' Avance 07: nuevas clases de reportes
+class PanelReportes {
+  + PanelReportes(datos: DatosSistema)
+}
+class ServicioReportes {
+  - datos: DatosSistema
+  + generar(tipo, desde, hasta, canchaFiltro, estadoFiltro): ResultadoReporte
+}
+class ResultadoReporte {
+  - columnas: String[]
+  - filas: List<Object[]>
+  - resumen: String
+  - nota: String
+}
+enum TipoReporte {
+  RESERVAS_FECHA
+  RESERVAS_CANCHA
+  INGRESOS_PERIODO
+  PAGOS_PENDIENTES
+  RESERVAS_CANCELADAS
+  CANCHA_MAS_UTILIZADA
+  HORARIOS_DEMANDA
+  CLIENTES_FRECUENTES
+}
+PanelReportes --> ServicioReportes
+ServicioReportes --> ResultadoReporte
+ServicioReportes --> TipoReporte
+ServicioReportes --> DatosSistema
 @enduml
