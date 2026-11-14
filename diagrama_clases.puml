@@ -30,6 +30,7 @@ class Reserva {
   + registrarPago(pago): void
   + getTotal(): BigDecimal
   + getSaldo(): BigDecimal
+  + sincronizarDesde(reserva): void
 }
 class Pago {
   - codigo: String
@@ -97,11 +98,21 @@ class GestionRegistros {
   + cambiarEstadoCancha(cancha, estado): void
   + registrarReserva(codigo, cliente, cancha, fecha, inicio, minutos): Reserva
   + cancelarReserva(reserva, motivo, operador): void
+  + registrarReservaCompleta(...): Reserva
+  + registrarPagoReserva(reserva, pago): void
+  + agregarServicioReserva(reserva, servicio): void
+  + cambiarEstadoReserva(reserva, estado): void
 }
+class FormularioNuevaReserva {
+  + mostrar(): boolean
+}
+FormularioNuevaReserva --> GestionRegistros
+FormularioNuevaReserva --> ServicioDisponibilidad
 class PanelesGestion {
   + crearClientes(): JPanel
   + crearCanchas(): JPanel
   + crearReservas(): JPanel
+  - cambiarEstado(tabla, siguiente, actualizar): void
 }
 PanelesGestion --> GestionRegistros
 GestionRegistros --> DatosSistema

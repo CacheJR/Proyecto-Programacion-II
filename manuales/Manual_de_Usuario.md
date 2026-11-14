@@ -2,7 +2,7 @@
 
 **Proyecto:** CanchaPro, Complejo Deportivo La 10  
 **Curso:** Programacion 2  
-**Version documentada:** Avance 07 (noviembre de 2026)
+**Version documentada:** Avance 08 (noviembre de 2026)
 
 ## 1. Para que sirve
 
@@ -121,3 +121,15 @@ No eliminar ni modificar manualmente los CSV mientras el programa este abierto. 
 ## 12. Funciones que todavia estan pendientes
 
 La version 07 no incluye tienda/cafeteria, devoluciones automaticas, edicion completa de todos los datos de una cancha, exportacion de reportes a PDF ni configuracion de tarifas desde CSV. El sistema funciona como proyecto academico y todavia puede recibir mejoras.
+
+
+## 13. Actualizacion del avance 08: reserva completa
+
+En la seccion **Reservas**, **Nueva reserva** ahora abre un formulario para:
+1. Seleccionar cliente, fecha, hora, duracion y tipo.
+2. Presionar **Buscar canchas libres** y seleccionar una de las canchas encontradas.
+3. Seleccionar uno o varios servicios (Ctrl + clic).
+4. Presionar **Calcular total**.
+5. Registrar un primer anticipo (Q0 si no hay anticipo), elegir metodo de pago y confirmar.
+
+La reserva se guarda como **CONFIRMADA**. En la misma pantalla se dispone de los botones **Confirmar**, **Iniciar** y **Finalizar**, que respetan las transiciones permitidas. Las cancelaciones se registran con motivo y responsable. Si el guardado de un pago falla, se restaura el valor anterior en memoria. La persistencia de seis CSV no equivale a una transaccion de base de datos, por lo que se deben hacer respaldos.

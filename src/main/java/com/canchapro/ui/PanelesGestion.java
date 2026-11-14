@@ -203,6 +203,14 @@ public class PanelesGestion {
         return base(botones, modelo, tabla, "El estado MANTENIMIENTO bloquea nuevas reservas.");
     }
 
+    private void cambiarEstado(JTable tabla, EstadoReserva siguiente, Runnable actualizar) {
+        int fila = seleccion(tabla);
+        if (fila == -1) return;
+        Reserva r = datos.getReservas().get(fila);
+        ejecutar(() -> gestion.cambiarEstadoReserva(r, siguiente));
+        actualizar.run();
+    }
+
     public JPanel crearReservas() {
         DefaultTableModel modelo = modelo("Codigo", "Cliente", "Cancha", "Fecha", "Inicio", "Fin", "Estado", "Total Q", "Saldo Q");
         JTable tabla = new JTable(modelo);
@@ -219,28 +227,15 @@ public class PanelesGestion {
             }
         };
         nuevo.addActionListener(e -> {
-            if (datos.getClientes().isEmpty() || datos.getCanchas().isEmpty()) {
-                JOptionPane.showMessageDialog(ventana, "Primero registre clientes y canchas."); return;
-            }
-            JTextField codigo = new JTextField();
-            JComboBox<String> cliente = new JComboBox<>(nombresClientes(datos.getClientes()));
-            JComboBox<String> cancha = new JComboBox<>(nombresCanchas(datos.getCanchas()));
-            JTextField fecha = new JTextField(LocalDate.now().plusDays(1).toString());
-            JTextField inicio = new JTextField("18:00");
-            JTextField minutos = new JTextField("60");
-            JPanel f = formulario();
-            campo(f, "Codigo:", codigo); campo(f, "Cliente:", cliente);
-            campo(f, "Cancha:", cancha); campo(f, "Fecha AAAA-MM-DD:", fecha);
-            campo(f, "Hora HH:mm:", inicio); campo(f, "Duracion minutos:", minutos);
-            if (aceptar(f, "Nueva reserva")) {
-                ejecutar(() -> gestion.registrarReserva(codigo.getText(),
-                        datos.getClientes().get(cliente.getSelectedIndex()),
-                        datos.getCanchas().get(cancha.getSelectedIndex()),
-                        LocalDate.parse(fecha.getText().trim()), LocalTime.parse(inicio.getText().trim()),
-                        Integer.parseInt(minutos.getText().trim())));
-                actualizar.run();
-            }
+            if (new FormularioNuevaReserva(ventana, datos, gestion).mostrar()) actualizar.run();
         });
+        JButton confirmar = new JButton("Confirmar");
+        JButton iniciar = new JButton("Iniciar");
+        JButton finalizar = new JButton("Finalizar");
+        botones.add(confirmar); botones.add(iniciar); botones.add(finalizar);
+        confirmar.addActionListener(e -> cambiarEstado(tabla, EstadoReserva.CONFIRMADA, actualizar));
+        iniciar.addActionListener(e -> cambiarEstado(tabla, EstadoReserva.EN_CURSO, actualizar));
+        finalizar.addActionListener(e -> cambiarEstado(tabla, EstadoReserva.FINALIZADA, actualizar));
         cancelar.addActionListener(e -> {
             int fila = seleccion(tabla);
             if (fila == -1) return;

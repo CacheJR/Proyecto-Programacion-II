@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /** Reglas de los formularios; la interfaz no escribe archivos directamente. */
 public class GestionRegistros {
@@ -129,23 +130,88 @@ public class GestionRegistros {
         return nueva;
     }
 
-    public void cancelarReserva(Reserva reserva, String motivo, String operador) {
-        if (!datos.getReservas().contains(reserva)) {
-            throw new IllegalArgumentException("Seleccione una reserva registrada");
+    /** Reserva, servicios, primer abono y confirmacion en una sola operacion. */
+    public Reserva registrarReservaCompleta(String codigo, Cliente cliente, Cancha cancha,
+            LocalDate fecha, LocalTime inicio, int minutos, List<ServicioAdicional> servicios,
+            BigDecimal anticipo, MetodoPago metodo) {
+        Objects.requireNonNull(servicios, "Indique los servicios");
+        Objects.requireNonNull(anticipo, "Indique el anticipo");
+        if (anticipo.signum() < 0 || anticipo.scale() > 2) {
+            throw new IllegalArgumentException("El anticipo no puede ser negativo ni tener mas de dos decimales");
         }
-        // Conservar copia para deshacer el cambio en memoria ante error de guardado.
-        Reserva anterior = Reserva.recuperar(reserva.getCodigo(), reserva.getCliente(), reserva.getCancha(),
-                reserva.getFecha(), reserva.getHoraInicio(), reserva.getDuracionMinutos(), reserva.getEstado(),
-                reserva.getFechaCancelacion(), reserva.getMotivoCancelacion(), reserva.getOperadorCancelacion(),
-                reserva.getServicios(), reserva.getPagos());
-        int posicion = datos.getReservas().indexOf(reserva);
-        reserva.cancelar(motivo, operador);
+        if (anticipo.signum() > 0 && metodo == null) {
+            throw new IllegalArgumentException("Seleccione el metodo de pago");
+        }
+        if (!datos.getClientes().contains(cliente)) {
+            throw new IllegalArgumentException("El cliente no esta registrado");
+        }
+        for (ServicioAdicional adicional : servicios) {
+            if (!datos.getServicios().contains(adicional)) {
+                throw new IllegalArgumentException("El servicio no esta registrado");
+            }
+        }
+        // La disponibilidad y el codigo se validan ANTES de crear el registro.
+        Reserva nueva = disponibilidad.registrarReserva(codigo, cliente, cancha, fecha, inicio, minutos);
+        try {
+            for (ServicioAdicional adicional : servicios) nueva.agregarServicio(adicional);
+            if (anticipo.signum() > 0) {
+                nueva.registrarPago(new Pago("P001", anticipo, metodo, "Anticipo de reserva"));
+            }
+            nueva.confirmar();
+            guardar();
+            return nueva;
+        } catch (RuntimeException error) {
+            // Si alguna validacion o el guardado falla, no queda una reserva en memoria.
+            datos.getReservas().remove(nueva);
+            throw error;
+        }
+    }
+
+    /** Se aplica un cambio sobre una copia para evitar cobrar si falla el archivo. */
+    private void cambiarReserva(Reserva original, Consumer<Reserva> accion) {
+        int posicion = datos.getReservas().indexOf(original);
+        if (posicion < 0) throw new IllegalArgumentException("La reserva no esta registrada");
+        Reserva copia = Reserva.recuperar(original.getCodigo(), original.getCliente(), original.getCancha(),
+                original.getFecha(), original.getHoraInicio(), original.getDuracionMinutos(),
+                original.getEstado(), original.getFechaCancelacion(), original.getMotivoCancelacion(),
+                original.getOperadorCancelacion(), original.getServicios(), original.getPagos());
+        accion.accept(copia);
+        datos.getReservas().set(posicion, copia);
         try {
             guardar();
-        } catch (IllegalStateException e) {
-            datos.getReservas().set(posicion, anterior);
-            throw e;
+            original.sincronizarDesde(copia);
+            datos.getReservas().set(posicion, original);
+        } catch (RuntimeException error) {
+            datos.getReservas().set(posicion, original);
+            throw error;
         }
+    }
+
+    public void agregarServicioReserva(Reserva reserva, ServicioAdicional adicional) {
+        if (!datos.getServicios().contains(adicional)) {
+            throw new IllegalArgumentException("Servicio no registrado");
+        }
+        cambiarReserva(reserva, copia -> copia.agregarServicio(adicional));
+    }
+
+    public void registrarPagoReserva(Reserva reserva, Pago pago) {
+        cambiarReserva(reserva, copia -> copia.registrarPago(pago));
+    }
+
+    public void cambiarEstadoReserva(Reserva reserva, EstadoReserva nuevoEstado) {
+        if (nuevoEstado == null) throw new IllegalArgumentException("Seleccione un estado");
+        cambiarReserva(reserva, copia -> {
+            switch (nuevoEstado) {
+                case CONFIRMADA -> copia.confirmar();
+                case EN_CURSO -> copia.iniciar();
+                case FINALIZADA -> copia.finalizar();
+                default -> throw new IllegalArgumentException("Transicion de estado no permitida");
+            }
+        });
+    }
+
+    public void cancelarReserva(Reserva reserva, String motivo, String operador) {
+        cambiarReserva(reserva, copia -> copia.cancelar(motivo, operador));
     }
 
     private void guardar() {

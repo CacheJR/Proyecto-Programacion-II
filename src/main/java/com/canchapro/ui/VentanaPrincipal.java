@@ -333,10 +333,9 @@ public class VentanaPrincipal extends JFrame {
                 Reserva r = reservas.get(selectorPago.getSelectedIndex());
                 BigDecimal cantidad = new BigDecimal(monto.getText().trim());
                 String codigo = "P" + String.format("%03d", r.getPagos().size() + 1);
-                r.registrarPago(new Pago(codigo, cantidad, (MetodoPago) metodo.getSelectedItem(), "Abono desde la interfaz"));
+                gestion.registrarPagoReserva(r, new Pago(codigo, cantidad, (MetodoPago) metodo.getSelectedItem(), "Abono desde la interfaz"));
                 actualizarTablaPagos();
-                guardarCambios();
-                JOptionPane.showMessageDialog(this, "Pago registrado. Saldo: Q" + r.getSaldo());
+                JOptionPane.showMessageDialog(this, "Pago registrado correctamente.");
             } catch (IllegalArgumentException | IllegalStateException error) {
                 JOptionPane.showMessageDialog(this, error.getMessage(), "Pago no aceptado", JOptionPane.ERROR_MESSAGE);
             }
@@ -344,10 +343,9 @@ public class VentanaPrincipal extends JFrame {
         botonServicio.addActionListener(e -> {
             try {
                 Reserva r = reservas.get(selectorServicio.getSelectedIndex());
-                r.agregarServicio((ServicioAdicional) serviciosCombo.getSelectedItem());
+                gestion.agregarServicioReserva(r, (ServicioAdicional) serviciosCombo.getSelectedItem());
                 actualizarTablaPagos();
-                guardarCambios();
-                JOptionPane.showMessageDialog(this, "Servicio agregado. Total: Q" + r.getTotal());
+                JOptionPane.showMessageDialog(this, "Servicio agregado correctamente.");
             } catch (IllegalArgumentException | IllegalStateException error) {
                 JOptionPane.showMessageDialog(this, error.getMessage(), "Servicio no aceptado", JOptionPane.ERROR_MESSAGE);
             }

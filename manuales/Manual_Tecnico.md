@@ -3,7 +3,7 @@
 **Proyecto:** Sistema de Gestion y Reservas para Complejos Deportivos  
 **Caso:** Complejo Deportivo La 10  
 **Curso:** Programacion 2  
-**Version documentada:** Avance 07 (noviembre de 2026)
+**Version documentada:** Avance 08 (noviembre de 2026)
 
 ## 1. Objetivo
 
@@ -222,3 +222,14 @@ Las pruebas de Swing requieren un ambiente grafico. Antes de la entrega final de
 Antes de modificar el proyecto, hacer una copia del codigo y de `datos/`. Si se agregan atributos nuevos a las clases, actualizar `ArchivosCSV`, pruebas, UML y manuales. No modificar los datos CSV mientras el programa este abierto.
 
 **Referencia de trabajo:** enunciado "CanchaPro - Sistema de Gestion y Reservas para Complejos Deportivos", proyecto final de Programacion 2.
+
+
+## 15. Cambio de arquitectura en el avance 08
+
+**FormularioNuevaReserva** permite completar el flujo exigido por el enunciado sin separar el primer cobro de la creacion. Busca canchas libres con `ServicioDisponibilidad`, calcula el total con `CalculadoraTarifas`, y envia los datos a `GestionRegistros.registrarReservaCompleta(...)`.
+
+En ese servicio se crea la reserva, se incorporan servicios, se valida y registra el primer anticipo y se confirma. Los datos se guardan mediante `ArchivosCSV.guardar(datos)`. Si el guardado o una regla falla, se elimina la reserva nueva de la lista en memoria.
+
+**cambiarReserva(...)** opera sobre una copia de la reserva antes de aplicar y guardar cambios de estados, servicios o pagos. Si la escritura falla, restaura la referencia anterior en la lista. Despues de guardar correctamente, sincroniza el objeto original con la copia validada. Este mecanismo evita que un pago rechazado quede aplicado solo en memoria; **no** garantiza una transaccion atomica entre los seis archivos CSV.
+
+Para probar las nuevas reglas ejecutar `PruebasFlujoReserva.java`. Comprueba 43 escenarios, incluidos el total, anticipo, conflicto de horario, cambios de estado, recuperacion CSV y fallos simulados de escritura. Se mantienen las pruebas de las fases previas.

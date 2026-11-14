@@ -173,6 +173,22 @@ public class Reserva {
         pagos.add(pago);
     }
 
+    /** Actualiza el objeto original despues de guardar una copia ya validada. */
+    public void sincronizarDesde(Reserva guardada) {
+        if (!codigo.equals(guardada.codigo) || cliente != guardada.cliente || cancha != guardada.cancha
+                || !fecha.equals(guardada.fecha) || !horaInicio.equals(guardada.horaInicio)) {
+            throw new IllegalArgumentException("No corresponde a la misma reserva");
+        }
+        estado = guardada.estado;
+        fechaCancelacion = guardada.fechaCancelacion;
+        motivoCancelacion = guardada.motivoCancelacion;
+        operadorCancelacion = guardada.operadorCancelacion;
+        servicios.clear();
+        servicios.addAll(guardada.servicios);
+        pagos.clear();
+        pagos.addAll(guardada.pagos);
+    }
+
     public List<Pago> getPagos() { return Collections.unmodifiableList(pagos); }
     public List<ServicioAdicional> getServicios() { return Collections.unmodifiableList(servicios); }
 
