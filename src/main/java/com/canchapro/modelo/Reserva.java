@@ -19,6 +19,7 @@ public class Reserva {
     private final LocalTime horaInicio;
     private final int duracionMinutos;
     private final LocalTime horaFin;
+    private BigDecimal costoCanchaFijo;
     private EstadoReserva estado;
     private LocalDateTime fechaCancelacion;
     private String motivoCancelacion;
@@ -57,6 +58,7 @@ public class Reserva {
         this.codigo = codigo.trim();
         this.duracionMinutos = duracionMinutos;
         this.estado = EstadoReserva.PENDIENTE;
+        this.costoCanchaFijo = CalculadoraTarifas.costoCancha(fecha, horaInicio, duracionMinutos);
     }
 
     /** Reconstruye una reserva historica y sus relaciones desde los CSV.
@@ -67,7 +69,21 @@ public class Reserva {
             LocalDate fecha, LocalTime inicio, int minutos, EstadoReserva estado,
             LocalDateTime canceladaEn, String motivo, String operador,
             List<ServicioAdicional> serviciosGuardados, List<Pago> pagosGuardados) {
+        return recuperar(codigo, cliente, cancha, fecha, inicio, minutos, estado,
+                canceladaEn, motivo, operador, serviciosGuardados, pagosGuardados,
+                CalculadoraTarifas.costoHistoricoInicial(fecha, inicio, minutos));
+    }
+
+    public static Reserva recuperar(String codigo, Cliente cliente, Cancha cancha,
+            LocalDate fecha, LocalTime inicio, int minutos, EstadoReserva estado,
+            LocalDateTime canceladaEn, String motivo, String operador,
+            List<ServicioAdicional> serviciosGuardados, List<Pago> pagosGuardados,
+            BigDecimal costoCanchaGuardado) {
         Reserva r = new Reserva(codigo, cliente, cancha, fecha, inicio, minutos, true);
+        if (costoCanchaGuardado == null || costoCanchaGuardado.signum() < 0 || costoCanchaGuardado.scale() > 2) {
+            throw new IllegalArgumentException("Costo historico de cancha incorrecto");
+        }
+        r.costoCanchaFijo = costoCanchaGuardado.setScale(2, RoundingMode.HALF_UP);
         for (ServicioAdicional servicio : serviciosGuardados) {
             r.agregarServicio(servicio);
         }
@@ -140,7 +156,7 @@ public class Reserva {
     }
 
     public BigDecimal getCostoCancha() {
-        return CalculadoraTarifas.costoCancha(fecha, horaInicio, duracionMinutos);
+        return costoCanchaFijo;
     }
 
     public BigDecimal getTotal() {
@@ -176,7 +192,8 @@ public class Reserva {
     /** Actualiza el objeto original despues de guardar una copia ya validada. */
     public void sincronizarDesde(Reserva guardada) {
         if (!codigo.equals(guardada.codigo) || cliente != guardada.cliente || cancha != guardada.cancha
-                || !fecha.equals(guardada.fecha) || !horaInicio.equals(guardada.horaInicio)) {
+                || !fecha.equals(guardada.fecha) || !horaInicio.equals(guardada.horaInicio)
+                || costoCanchaFijo.compareTo(guardada.costoCanchaFijo) != 0) {
             throw new IllegalArgumentException("No corresponde a la misma reserva");
         }
         estado = guardada.estado;

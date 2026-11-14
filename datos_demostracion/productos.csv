@@ -1,0 +1,3 @@
+codigo;nombre;categoria;precio;existencia;minimo;activo
+PR01;Agua pura;Bebidas;5.00;30;5;true
+PR02;Galletas;Snacks;8.00;20;4;true

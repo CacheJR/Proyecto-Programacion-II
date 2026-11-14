@@ -1,59 +1,53 @@
 # CanchaPro
 
-Proyecto final de Programacion 2 con Java 17, Swing y Maven. La informacion se guarda en archivos CSV, sin usar base de datos.
+Proyecto final de **Programación 2**. Sistema de reservas para el Complejo Deportivo ficticio "La 10".
 
-## Avances
-1. Ventana principal y navegacion.
-2. Modelo Cliente, Cancha y Reserva.
-3. Disponibilidad y deteccion de horarios traslapados.
-4. Tarifas, servicios y pagos.
-5. Guardado y recuperacion mediante CSV.
-6. Formularios para clientes, canchas y reservas.
-7. Reportes: reservas por fecha, por cancha, ingresos por periodo, pagos pendientes, cancelaciones, cancha mas usada, horarios de demanda y clientes frecuentes.
-8. Formulario completo de reservas: consultar disponibilidad, elegir cancha y servicios, calcular total, registrar anticipo y confirmar. Botones para iniciar y finalizar reservas.
+**Tecnologías:** Java 17, Swing, Maven, Programación Orientada a Objetos y archivos CSV (sin base de datos).
 
-## Abrir en NetBeans
-Abrir la carpeta como proyecto Maven con Java 17 o superior. Ejecutar `Main.java`. El sistema carga los CSV de la carpeta `datos/`; si no existen en el primer inicio se crean datos de ejemplo.
+## Cómo abrirlo en NetBeans
 
-## Probar la fase 07
-1. Entrar en **Reportes**.
-2. Elegir **Reservas por cancha** o **Clientes con mas reservas** y presionar **Consultar**.
-3. Cambiar fechas, cancha o estado para filtrar la informacion.
-4. Elegir **Ingresos por periodo**: se suman los pagos efectivamente registrados **por fecha de cobro**, no el total de todas las reservas.
-5. Elegir **Pagos pendientes** para comprobar las reservas con saldo mayor a cero.
-6. Elegir **Reservas canceladas**: el filtro de fechas corresponde al dia de cancelacion.
-7. En otros modulos, registrar un cliente o una reserva y regresar a Reportes para comprobar los cambios.
+1. Instalar JDK 17 o superior y abrir Apache NetBeans.
+2. **Archivo > Abrir proyecto** y elegir la carpeta que contiene `pom.xml`.
+3. Ejecutar `Main.java` (paquete `com.canchapro`).
+4. En el primer inicio se crean archivos CSV de ejemplo en `datos/`. En siguientes inicios se recuperan.
 
-Para que se vean los datos de ejemplo, al abrir la aplicacion se proponen fechas desde 7 dias atras hasta 30 dias adelante; se pueden cambiar.
+Para compilar por terminal, si tienes Maven instalado:
+
+```bash
+mvn clean package
+java -jar target/CanchaPro-1.0-SNAPSHOT.jar
+```
+
+También se incluye un ejecutable JAR en el paquete de entrega. Para Windows, usar `ejecutable/ejecutar.bat` desde la carpeta del proyecto.
+
+## Funciones
+
+- Clientes: registrar, buscar y modificar.
+- Canchas: registrar, cambiar estado y gestionar horario.
+- Disponibilidad: detectar traslapes por fecha, hora, duración y tipo de cancha.
+- Reservas: registrar, añadir servicios, cobrar anticipo, confirmar, iniciar, finalizar y cancelar.
+- Pagos: distintos métodos, varios abonos, cálculo del saldo.
+- Tarifas: se configuran en **Configuración**, se guardan en `datos/tarifas.csv` y afectan reservas nuevas, no las anteriores.
+- Dashboard: reservas del día, en curso, pendientes e ingresos recibidos hoy.
+- Reportes: ocho tipos con filtros.
+- Tienda/Cafetería: módulo adicional que se activa desde Configuración, con productos, ventas e inventario.
+
+## Archivos y copias
+
+El programa utiliza `datos/` como carpeta local. Para respaldar la información, **cerrar CanchaPro y copiar toda la carpeta**. Los siete CSV del núcleo son `clientes.csv`, `canchas.csv`, `servicios.csv`, `tarifas.csv`, `reservas.csv`, `reserva_servicios.csv` y `pagos.csv`. La tienda utiliza `productos.csv`, `ventas.csv` y `detalle_ventas.csv`, además de `configuracion.properties` para activarse.
+
+Si se abre una versión anterior que contiene seis CSV sin `tarifas.csv`, el programa crea las tarifas iniciales y lee sus reservas existentes. Los nuevos guardados incluyen el precio histórico de cada reserva.
+
+## Documentación
+
+- `diagrama_clases.puml`: diagrama UML del código.
+- `manuales/Manual_de_Usuario.md`: explicación de las pantallas.
+- `manuales/Manual_Tecnico.md`: clases, reglas, archivos y pruebas.
+- `documentacion/Informe_Final.md`: informe académico con evidencias y conclusiones.
+- `documentacion/capturas/`: capturas tomadas del programa real.
 
 ## Pruebas
-Ejecutar **PruebasReportes.java** con Run File. Las pruebas antiguas de disponibilidad, pagos, CSV, formularios e interfaz se conservaron. `PruebasInterfaz` requiere entorno grafico.
 
-## Probar el avance 08
+Las pruebas están en `src/test/java/com/canchapro/`. Se pueden ejecutar individualmente con **Run File** desde NetBeans. La mayoría no necesita pantalla; las pruebas de interfaz requieren entorno gráfico.
 
-1. Ir a **Reservas** y presionar **Nueva reserva**.
-2. Elegir cliente, fecha, hora y tipo de cancha; consultar **Buscar canchas libres**.
-3. Elegir la cancha disponible, los servicios adicionales, y presionar **Calcular total**.
-4. Ingresar un primer anticipo o Q0 y confirmar.
-5. La reserva queda **CONFIRMADA** y se guarda en los CSV.
-6. Usar **Iniciar** y **Finalizar** sobre una reserva confirmada.
-7. Cerrar y reabrir CanchaPro para comprobar el historial.
-
-Ejecutar `PruebasFlujoReserva.java` con Run File: son 43 pruebas de la nueva fase. Los pagos y servicios ahora se gestionan a traves de GestionRegistros, que restaura en memoria los cambios rechazados por fallos de guardado.
-
-**Limitacion:** cada CSV se reemplaza por separado; todavia no existe una transaccion unica para los seis archivos. Conviene conservar respaldos de la carpeta datos.
-
-## Notas importantes
-- Se excluyen las reservas canceladas de ocupacion, rankings y saldos pendientes.
-- Una reserva cancelada puede conservar abonos cobrados: no existe devolucion automatica, por lo que esos pagos siguen apareciendo en ingresos.
-- Los horarios de demanda se cuentan por la **hora de inicio** de cada reserva, no por horas completas ocupadas.
-- El reporte de ingresos se filtra por fecha de pago; los demas reportes usan fecha de la reserva, excepto cancelaciones.
-- El precio base de la cancha aun no reemplaza la tarifa general de `CalculadoraTarifas`.
-- Pendiente: configuracion de tarifas desde CSV, mejoras de captura y modulo opcional de tienda/cafeteria.
-
-## Manuales
-
-- [Manual de Usuario](manuales/Manual_de_Usuario.md): instalacion, uso de pantallas, reservas, pagos y errores frecuentes.
-- [Manual Tecnico](manuales/Manual_Tecnico.md): clases, metodos, CSV, reglas, UML y pruebas.
-
-Los manuales corresponden al Avance 07. Los reportes personales de estudio se entregan por separado y no se publican aqui.
+**Notas:** las tarifas usan la franja de la **hora inicial** (nivel medio del enunciado). La cancelación conserva el historial, pero no genera devoluciones automáticas. Los CSV se sustituyen por archivo; no constituyen una transacción de base de datos y conviene conservar respaldos.

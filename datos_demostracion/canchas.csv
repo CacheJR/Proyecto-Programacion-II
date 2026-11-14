@@ -1,0 +1,4 @@
+codigo;nombre;tipo;capacidad;precioBase;estado;apertura;cierre
+C01;La Bombonera;FUTBOL_5;10;150.00;DISPONIBLE;08:00;23:00
+C02;El Maracana;FUTBOL_5;10;150.00;DISPONIBLE;08:00;23:00
+C03;El Monumental;FUTBOL_7;14;200.00;MANTENIMIENTO;08:00;23:00

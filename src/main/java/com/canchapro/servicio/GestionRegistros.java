@@ -174,7 +174,8 @@ public class GestionRegistros {
         Reserva copia = Reserva.recuperar(original.getCodigo(), original.getCliente(), original.getCancha(),
                 original.getFecha(), original.getHoraInicio(), original.getDuracionMinutos(),
                 original.getEstado(), original.getFechaCancelacion(), original.getMotivoCancelacion(),
-                original.getOperadorCancelacion(), original.getServicios(), original.getPagos());
+                original.getOperadorCancelacion(), original.getServicios(), original.getPagos(),
+                original.getCostoCancha());
         accion.accept(copia);
         datos.getReservas().set(posicion, copia);
         try {

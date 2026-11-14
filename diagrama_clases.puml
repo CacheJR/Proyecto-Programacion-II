@@ -1,168 +1,126 @@
 @startuml
+left to right direction
 skinparam classAttributeIconSize 0
-class Cliente {
-  - codigo: String
-  - nombre: String
-  - telefono: String
-  + actualizarContacto(telefono, correo): void
-  + actualizarNombre(nombre): void
+skinparam packageStyle rectangle
+package "Modelo CORE" {
+ class Cliente {
+   - codigo: String
+   - nombre: String
+   - telefono: String
+   + actualizarContacto(telefono, correo): void
+ }
+ class Cancha {
+   - codigo: String
+   - tipo: TipoCancha
+   - estado: EstadoCancha
+   - horaApertura: LocalTime
+   - horaCierre: LocalTime
+   + cambiarEstado(nuevoEstado): void
+ }
+ class Reserva {
+   - codigo: String
+   - cliente: Cliente
+   - cancha: Cancha
+   - fecha: LocalDate
+   - horaInicio: LocalTime
+   - horaFin: LocalTime
+   - costoCanchaFijo: BigDecimal
+   - estado: EstadoReserva
+   + confirmar(): void
+   + iniciar(): void
+   + finalizar(): void
+   + cancelar(motivo, operador): void
+   + agregarServicio(servicio): void
+   + registrarPago(pago): void
+   + getTotal(): BigDecimal
+   + getSaldo(): BigDecimal
+ }
+ class ServicioAdicional { - codigo: String\n- nombre: String\n- precio: BigDecimal }
+ class Pago { - codigo: String\n- monto: BigDecimal\n- metodo: MetodoPago }
+ enum EstadoCancha { DISPONIBLE\nMANTENIMIENTO\nINACTIVA }
+ enum EstadoReserva { PENDIENTE\nCONFIRMADA\nEN_CURSO\nFINALIZADA\nCANCELADA }
+ enum TipoCancha { FUTBOL_5\nFUTBOL_7 }
+ enum MetodoPago { EFECTIVO\nTRANSFERENCIA\nTARJETA }
 }
-class Cancha {
-  - codigo: String
-  - nombre: String
-  - tipo: TipoCancha
-  - estado: EstadoCancha
-  - horaApertura: LocalTime
-  - horaCierre: LocalTime
-  + cambiarEstado(nuevoEstado): void
-}
-class Reserva {
-  - codigo: String
-  - cliente: Cliente
-  - cancha: Cancha
-  - fecha: LocalDate
-  - horaInicio: LocalTime
-  - horaFin: LocalTime
-  - estado: EstadoReserva
-  + confirmar(): void
-  + cancelar(motivo, operador): void
-  + agregarServicio(servicio): void
-  + registrarPago(pago): void
-  + getTotal(): BigDecimal
-  + getSaldo(): BigDecimal
-  + sincronizarDesde(reserva): void
-}
-class Pago {
-  - codigo: String
-  - monto: BigDecimal
-  - fechaHora: LocalDateTime
-  - metodo: MetodoPago
-}
-class ServicioAdicional {
-  - codigo: String
-  - nombre: String
-  - precio: BigDecimal
-}
-class CalculadoraTarifas {
-  + tarifaPorHora(fecha, inicio): BigDecimal
-  + costoCancha(fecha, inicio, minutos): BigDecimal
-}
-enum MetodoPago {
-  EFECTIVO
-  TRANSFERENCIA
-  TARJETA
-}
-Pago --> MetodoPago
-Reserva ..> CalculadoraTarifas
-class ServicioDisponibilidad {
-  - canchas: List<Cancha>
-  - reservas: List<Reserva>
-  + buscarDisponibles(tipo, fecha, inicio, minutos): List<Cancha>
-  + estaDisponible(cancha, fecha, inicio, minutos): boolean
-  + seTraslapan(inicioNuevo, finNuevo, inicioExistente, finExistente): boolean
-  + registrarReserva(codigo, cliente, cancha, fecha, inicio, minutos): Reserva
-}
-enum EstadoCancha {
- DISPONIBLE
- MANTENIMIENTO
- INACTIVA
-}
-enum EstadoReserva {
- PENDIENTE
- CONFIRMADA
- EN_CURSO
- FINALIZADA
- CANCELADA
-}
-enum TipoCancha {
- FUTBOL_5
- FUTBOL_7
-}
-Cliente "1" <-- "0..*" Reserva : cliente
-Cancha "1" <-- "0..*" Reserva : cancha
-Cancha --> EstadoCancha
-Cancha --> TipoCancha
+Reserva "0..*" --> "1" Cliente : cliente
+Reserva "0..*" --> "1" Cancha : cancha
 Reserva "1" o-- "0..*" Pago : abonos
 Reserva "1" o-- "0..*" ServicioAdicional : servicios
 Reserva --> EstadoReserva
-ServicioDisponibilidad --> "0..*" Cancha
-ServicioDisponibilidad --> "0..*" Reserva
-class GestionRegistros {
-  - datos: DatosSistema
-  - archivos: ArchivosCSV
-  - disponibilidad: ServicioDisponibilidad
-  + buscarClientes(consulta): List<Cliente>
-  + registrarCliente(codigo, nombre, telefono, correo): Cliente
-  + actualizarCliente(cliente, nombre, telefono, correo): void
-  + registrarCancha(codigo, nombre, tipo, capacidad, precio, estado, abre, cierra): Cancha
-  + cambiarEstadoCancha(cancha, estado): void
-  + registrarReserva(codigo, cliente, cancha, fecha, inicio, minutos): Reserva
-  + cancelarReserva(reserva, motivo, operador): void
+Cancha --> EstadoCancha
+Cancha --> TipoCancha
+Pago --> MetodoPago
+package "Servicios" {
+ class ConfiguracionTarifas {
+  - diurna: BigDecimal
+  - nocturna: BigDecimal
+  - finSemana: BigDecimal
+ }
+ class CalculadoraTarifas {
+  + tarifaPorHora(fecha,inicio): BigDecimal
+  + costoCancha(fecha,inicio,minutos): BigDecimal
+ }
+ class ServicioDisponibilidad {
+  + buscarDisponibles(...): List<Cancha>
+  + seTraslapan(...): boolean
+  + registrarReserva(...): Reserva
+ }
+ class GestionRegistros {
+  + registrarCliente(...): Cliente
+  + registrarCancha(...): Cancha
   + registrarReservaCompleta(...): Reserva
-  + registrarPagoReserva(reserva, pago): void
-  + agregarServicioReserva(reserva, servicio): void
-  + cambiarEstadoReserva(reserva, estado): void
+  + registrarPagoReserva(...): void
+  + cambiarEstadoReserva(...): void
+ }
+ class ServicioDashboard { + calcular(hoy): Resumen }
+ class ServicioReportes { + generar(...): ResultadoReporte }
+ class ResultadoReporte { - columnas: String[]\n- filas: List<Object[]> }
 }
-class FormularioNuevaReserva {
-  + mostrar(): boolean
+package "Datos" {
+ class DatosSistema { - clientes: List<Cliente>\n- canchas: List<Cancha>\n- reservas: List<Reserva> }
+ class ArchivosCSV { + cargarOIniciar(): DatosSistema\n+ cargar(): DatosSistema\n+ guardar(datos): void\n+ cargarTarifas(): ConfiguracionTarifas\n+ guardarTarifas(tarifas): void }
 }
-FormularioNuevaReserva --> GestionRegistros
-FormularioNuevaReserva --> ServicioDisponibilidad
-class PanelesGestion {
-  + crearClientes(): JPanel
-  + crearCanchas(): JPanel
-  + crearReservas(): JPanel
-  - cambiarEstado(tabla, siguiente, actualizar): void
-}
-PanelesGestion --> GestionRegistros
+DatosSistema *-- Cliente
+DatosSistema *-- Cancha
+DatosSistema *-- Reserva
+ArchivosCSV ..> DatosSistema
+ArchivosCSV ..> ConfiguracionTarifas
 GestionRegistros --> DatosSistema
 GestionRegistros --> ArchivosCSV
 GestionRegistros --> ServicioDisponibilidad
-class DatosSistema {
-  - clientes: List<Cliente>
-  - canchas: List<Cancha>
-  - servicios: List<ServicioAdicional>
-  - reservas: List<Reserva>
-  + getClientes(): List<Cliente>
-  + getReservas(): List<Reserva>
-}
-class ArchivosCSV {
-  - carpeta: Path
-  + cargarOIniciar(): DatosSistema
-  + cargar(): DatosSistema
-  + guardar(datos: DatosSistema): void
-}
-ArchivosCSV ..> DatosSistema : lee / escribe
-DatosSistema --> Cliente
-DatosSistema --> Cancha
-DatosSistema --> Reserva
-DatosSistema --> ServicioAdicional
-' Avance 07: nuevas clases de reportes
-class PanelReportes {
-  + PanelReportes(datos: DatosSistema)
-}
-class ServicioReportes {
-  - datos: DatosSistema
-  + generar(tipo, desde, hasta, canchaFiltro, estadoFiltro): ResultadoReporte
-}
-class ResultadoReporte {
-  - columnas: String[]
-  - filas: List<Object[]>
-  - resumen: String
-  - nota: String
-}
-enum TipoReporte {
-  RESERVAS_FECHA
-  RESERVAS_CANCHA
-  INGRESOS_PERIODO
-  PAGOS_PENDIENTES
-  RESERVAS_CANCELADAS
-  CANCHA_MAS_UTILIZADA
-  HORARIOS_DEMANDA
-  CLIENTES_FRECUENTES
-}
-PanelReportes --> ServicioReportes
-ServicioReportes --> ResultadoReporte
-ServicioReportes --> TipoReporte
+ServicioDashboard --> DatosSistema
 ServicioReportes --> DatosSistema
+ServicioReportes --> ResultadoReporte
+CalculadoraTarifas --> ConfiguracionTarifas
+Reserva ..> CalculadoraTarifas
+package "Interfaz Swing" {
+ class VentanaPrincipal
+ class PanelesGestion
+ class FormularioNuevaReserva
+ class PanelReportes
+ class PanelTienda
+}
+VentanaPrincipal --> DatosSistema
+VentanaPrincipal --> PanelesGestion
+VentanaPrincipal --> PanelReportes
+VentanaPrincipal --> PanelTienda
+FormularioNuevaReserva --> GestionRegistros
+PanelesGestion --> GestionRegistros
+PanelReportes --> ServicioReportes
+package "Tienda opcional" {
+ class Producto { - codigo: String\n- precio: BigDecimal\n- existencia: int\n+ vender(cantidad): void }
+ class DetalleVenta { - productoCodigo: String\n- cantidad: int\n- precioUnitario: BigDecimal }
+ class Venta { - codigo: String\n- detalles: List<DetalleVenta>\n- total: BigDecimal }
+ class DatosTienda { - productos: List<Producto>\n- ventas: List<Venta> }
+ class ServicioTienda { + registrarProducto(producto): void\n+ vender(...): Venta }
+ class ArchivosTienda { + cargarOIniciar(): DatosTienda\n+ guardar(datos): void }
+ class ConfiguracionModulos { + configurarTienda(activar): void }
+}
+Venta "1" o-- "1..*" DetalleVenta
+DatosTienda *-- Producto
+DatosTienda *-- Venta
+ServicioTienda --> ArchivosTienda
+ServicioTienda --> DatosTienda
+PanelTienda --> ServicioTienda
+VentanaPrincipal --> ConfiguracionModulos
 @enduml

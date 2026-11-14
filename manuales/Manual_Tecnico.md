@@ -1,235 +1,136 @@
-# Manual tecnico - CanchaPro
+# Manual Técnico — CanchaPro
 
-**Proyecto:** Sistema de Gestion y Reservas para Complejos Deportivos  
-**Caso:** Complejo Deportivo La 10  
-**Curso:** Programacion 2  
-**Version documentada:** Avance 08 (noviembre de 2026)
+**Proyecto final de Programación 2** · Java 17 · Swing · Maven · Noviembre de 2026
 
 ## 1. Objetivo
 
-Explicar la estructura del codigo, las reglas de negocio, los archivos y las pruebas del sistema para poder darle mantenimiento y defender su funcionamiento.
+Explicar cómo está organizado CanchaPro y cómo trabaja desde la ventana hasta los objetos y archivos. La aplicación es local: no usa servidor, base de datos ni inicio de sesión.
 
-CanchaPro es una aplicacion **de escritorio**, desarrollada en **Java 17**, **Swing** y **Maven**. No se utiliza servidor web, API ni base de datos. La informacion se guarda en archivos CSV de texto.
+## 2. Requisitos de ejecución
 
-## 2. Como compilar y ejecutar
+- JDK **17 o superior**.
+- Apache NetBeans con soporte Maven.
+- Permisos para crear la carpeta `datos/` en el directorio de ejecución.
 
-1. Instalar JDK 17 o superior y Apache NetBeans con soporte Maven.
-2. Clonar o descargar `CacheJR/Proyecto-Programacion-II`.
-3. Abrir el directorio que contiene `pom.xml`.
-4. Ejecutar `src/main/java/com/canchapro/Main.java`.
+Abrir el directorio que contiene `pom.xml` y ejecutar `com.canchapro.Main`. Para compilar con Maven: `mvn clean package`. El JAR incluye el punto de entrada `com.canchapro.Main`.
 
-Desde una consola con Maven instalado se puede compilar mediante:
+## 3. Paquetes
 
-```bash
-mvn clean package
-java -jar target/CanchaPro-1.0-SNAPSHOT.jar
-```
-
-El directorio de trabajo determina donde se encuentra la carpeta relativa `datos/`. Por eso es importante comprobar la ruta en **Configuracion**.
-
-## 3. Estructura de carpetas
-
-```text
-src/main/java/com/canchapro/
-  Main.java
-  DatosSistema.java
-  DatosEjemplo.java
-  modelo/
-    Cliente.java, Cancha.java, Reserva.java
-    Pago.java, ServicioAdicional.java
-    EstadoCancha.java, EstadoReserva.java
-    TipoCancha.java, MetodoPago.java
-  servicio/
-    ServicioDisponibilidad.java
-    CalculadoraTarifas.java
-    GestionRegistros.java
-    ServicioReportes.java
-    TipoReporte.java
-    ResultadoReporte.java
-  persistencia/
-    ArchivosCSV.java
-  ui/
-    VentanaPrincipal.java
-    PanelesGestion.java
-    PanelReportes.java
-src/test/java/com/canchapro/
-  PruebasDisponibilidad.java, PruebasPagos.java
-  PruebasArchivosCSV.java, PruebasFormularios.java
-  PruebasInterfaz.java, PruebasReportes.java
-  PruebasInterfazReportes.java
-pom.xml
-diagrama_clases.puml
-```
-
-`diagrama_clases.puml` contiene el UML en formato PlantUML. Se debe revisar y actualizar cuando cambien las clases.
-
-## 4. Funciones de las clases principales
-
-| Clase | Responsabilidad |
+| Paquete | Función |
 | --- | --- |
-| `Main` | Punto de entrada; inicia Swing con `SwingUtilities.invokeLater` |
-| `VentanaPrincipal` | Ventana, menu lateral, Pagos, Disponibilidad y Configuracion |
+| `com.canchapro` | `Main`, `DatosSistema` y `DatosEjemplo` |
+| `modelo` | `Cliente`, `Cancha`, `Reserva`, `Pago`, servicios y enums |
+| `servicio` | disponibilidad, registros, tarifas, Dashboard y reportes |
+| `persistencia` | `ArchivosCSV`, lectura y escritura del núcleo |
+| `ui` | ventanas y formularios Swing, reportes y tienda |
+| `tienda` | productos, ventas, detalle, inventario, configuración y archivos propios |
+
+El diagrama UML del código se encuentra en `diagrama_clases.puml`.
+
+## 4. Clases importantes
+
+| Clase | Responsabilidad principal |
+| --- | --- |
+| `Main` | Arrancar Swing en el hilo de eventos con `invokeLater` |
+| `VentanaPrincipal` | Menu, Dashboard, Disponibilidad, Pagos y Configuración |
 | `PanelesGestion` | Formularios de Clientes, Canchas y Reservas |
-| `PanelReportes` | Interfaz de seleccion, filtros y tabla de reportes |
-| `DatosSistema` | Contiene listas de clientes, canchas, servicios y reservas |
-| `Cliente` | Codigo, nombre, telefono, correo y fecha de registro |
-| `Cancha` | Datos de la cancha, horarios y estado |
-| `Reserva` | Cliente y cancha asociados, fechas, estado, servicios, pagos y saldo |
-| `Pago` | Codigo, fecha y hora, monto, metodo y observacion |
-| `ServicioAdicional` | Codigo, nombre y precio |
-| `ServicioDisponibilidad` | Comprueba estados, horarios, traslapes y registro en memoria |
-| `GestionRegistros` | Validaciones de altas/ediciones/cancelaciones y guardado |
-| `CalculadoraTarifas` | Calcula costos de alquiler por fecha, hora y minutos |
-| `ServicioReportes` | Agrupa, cuenta, filtra y suma objetos para obtener ocho reportes |
-| `ArchivosCSV` | Lee, valida, escribe y reconstruye los objetos al iniciar |
+| `FormularioNuevaReserva` | Flujo completo con cancha, servicios, anticipo y confirmación |
+| `DatosSistema` | Listas de objetos compartidos |
+| `Cliente` y `Cancha` | Datos de clientes y canchas |
+| `Reserva` | Horario, estado, costo histórico, servicios, pagos y saldo |
+| `ServicioDisponibilidad` | Reglas para evitar horarios traslapados |
+| `GestionRegistros` | Altas, cambios, pagos y guardado con copia/retroceso en memoria |
+| `CalculadoraTarifas` | Seleccionar tarifa y calcular alquiler por minutos |
+| `ConfiguracionTarifas` | Tres valores configurables con validación |
+| `ServicioDashboard` | Indicadores reales del día y saldo pendiente |
+| `ServicioReportes` | Ocho reportes agrupados y filtrados |
+| `ArchivosCSV` | Persistir y reconstruir el núcleo en siete CSV |
+| `PanelTienda` | Pantalla opcional de inventario y ventas |
+| `Producto`, `Venta` y `DetalleVenta` | Entidades del módulo opcional |
+| `ServicioTienda` | Comprobar stock, registrar ventas y descontar inventario |
+| `ArchivosTienda` | Lectura/escritura de tres CSV independientes |
+| `ConfiguracionModulos` | Activación de tienda por archivo de propiedades |
 
-Las clases `EstadoCancha`, `EstadoReserva`, `TipoCancha`, `MetodoPago` y `TipoReporte` son enumeraciones (`enum`) que evitan valores de texto inconsistentes.
+Se usa encapsulamiento con atributos privados; `Reserva` tiene asociaciones con `Cliente` y `Cancha`, y colecciones de `Pago` y `ServicioAdicional`. `VentanaPrincipal` hereda de `JFrame`. Los enums evitan valores arbitrarios para estados y tipos.
 
-## 5. Relaciones orientadas a objetos
+## 5. Recorrido de una operación
 
-Una **Reserva** pertenece a un **Cliente** y a una **Cancha**. Una reserva puede incluir varios **ServicioAdicional** y varios **Pago**. Las listas en `DatosSistema` conservan los objetos compartidos.
+**Inicio:** `Main.main()` → `SwingUtilities.invokeLater` → `VentanaPrincipal` → `ArchivosCSV.cargarOIniciar()` → `DatosSistema` → pantalla.
 
-Se utiliza encapsulamiento al declarar atributos `private` y acceder a ellos mediante constructores, metodos y getters. `VentanaPrincipal extends JFrame` aplica herencia. El tipo `enum` limita los posibles estados y tipos.
+**Nueva reserva:** `FormularioNuevaReserva.mostrar()` → `ServicioDisponibilidad.buscarDisponibles()` → `GestionRegistros.registrarReservaCompleta()` → objeto `Reserva` → `ArchivosCSV.guardar()`.
 
-## 6. Flujo de inicio
+**Venta opcional:** `PanelTienda` → `ServicioTienda.vender()` → objetos `Producto`, `Venta` y `DetalleVenta` → `ArchivosTienda.guardar()`.
 
-```text
-Main.main()
-    -> SwingUtilities.invokeLater()
-    -> VentanaPrincipal()
-    -> ArchivosCSV.cargarOIniciar()
-    -> DatosSistema (objetos y listas)
-    -> Construccion del menu y pantallas
+La interfaz no escribe directamente las filas CSV: las clases de servicio y persistencia se encargan de ello.
+
+## 6. Disponibilidad y estados
+
+Existe traslape si se cumple:
+
+```
+inicioNuevo < finExistente  Y  finNuevo > inicioExistente
 ```
 
-Si no existe ninguno de los seis CSV y el directorio esta vacio o no existe, el programa genera datos de ejemplo. Si faltan archivos en un conjunto existente, presenta un error para evitar sobrescribir registros.
+Se comprueba el mismo día y la misma cancha. No se considera conflicto cuando una reserva empieza exactamente al finalizar otra. Se rechazan las canchas `MANTENIMIENTO` o `INACTIVA`, las solicitudes fuera de apertura y duraciones no válidas. Las reservas canceladas no bloquean el horario.
 
-## 7. Flujo de una reserva
+Estados de reserva: `PENDIENTE` → `CONFIRMADA` → `EN_CURSO` → `FINALIZADA`. Las pendientes y confirmadas pueden pasar a `CANCELADA` registrando fecha, motivo y operador. La interfaz solo permite transiciones válidas.
 
-```text
-Formulario Swing
-    -> PanelesGestion.crearReservas()
-    -> GestionRegistros.registrarReserva()
-    -> ServicioDisponibilidad.registrarReserva()
-    -> Reserva (objeto en memoria)
-    -> ArchivosCSV.guardar()
-    -> Archivos CSV
+## 7. Tarifas, pagos y saldo
+
+Tarifa original: Q150/h diurna entre semana, Q225/h nocturna entre semana y Q250/h sábados y domingos. Se utiliza la franja correspondiente a la **hora inicial**.
+
+```
+Costo de cancha = Tarifa inicial × (minutos / 60)
+Total = Costo de cancha + Servicios adicionales
+Pagado = Suma de los pagos registrados
+Saldo = Total - Pagado
 ```
 
-Primero se valida que el cliente este registrado, que la cancha exista y este disponible y que el codigo de reserva no se repita. Si pasa las validaciones, se crea la reserva y se guarda.
+`BigDecimal` evita errores de precisión con dinero. `ConfiguracionTarifas` valida los valores de `tarifas.csv`. Al crear la reserva, el costo de cancha queda guardado como **costo histórico** en `reservas.csv`; por eso los cambios de tarifa no alteran importes anteriores. En una instalación anterior de seis CSV, el programa admite el encabezado antiguo y conserva los valores de referencia en la migración.
 
-**Regla de traslape:** hay conflicto cuando se cumplen ambas condiciones:
+`Reserva.registrarPago()` rechaza duplicados, importes no positivos y pagos mayores al saldo. `GestionRegistros` modifica una copia de la reserva y mantiene el estado anterior en memoria si el guardado falla; aun así **los seis archivos no forman una transacción atómica global**.
 
-```text
-inicioNuevo < finExistente
-Y
-finNuevo > inicioExistente
-```
+## 8. Archivos del núcleo
 
-Ejemplo: una reserva existente de 18:00 a 19:30 bloquea otra de 19:00 a 20:00 en la misma cancha. Una nueva de 19:30 a 20:30 puede iniciar porque no se superpone, siempre que no choque con otra reserva.
-
-Las reservas canceladas no bloquean horarios.
-
-## 8. Tarifa, servicios y pagos
-
-`CalculadoraTarifas.tarifaPorHora(fecha, inicio)` selecciona **Q150**, **Q225** o **Q250** por hora, segun dia y horario. `costoCancha(fecha, inicio, minutos)` calcula la tarifa proporcional a los minutos.
-
-```text
-Costo cancha = Tarifa por hora x (minutos / 60)
-Total reserva = Costo cancha + Suma de servicios
-Pagado        = Suma de pagos registrados
-Saldo         = Total reserva - Pagado
-```
-
-Se utiliza `BigDecimal` para manejar importes de dinero y evitar errores de precision binaria. `Reserva.registrarPago()` rechaza importes mayores al saldo, codigos repetidos y pagos para estados no permitidos. `Reserva.agregarServicio()` evita servicios duplicados y no permite agregar servicios despues del primer pago.
-
-**Limite actual:** las tarifas estan escritas en `CalculadoraTarifas`, no se leen de `tarifas.csv`. Se usa la tarifa de la hora inicial cuando una reserva cruza franjas horarias.
-
-## 9. Guardado y recuperacion CSV
-
-La clase `ArchivosCSV` trabaja con seis archivos en `datos/`, codificacion **UTF-8** y separador **punto y coma (`;`)**.
-
-| Archivo | Guarda |
+| Archivo | Datos almacenados |
 | --- | --- |
-| `clientes.csv` | Codigo, nombre, telefono, correo y fecha de registro |
-| `canchas.csv` | Identificacion, tipo, capacidad, precio base, estado y horario |
-| `servicios.csv` | Catalogo de servicios y precios |
-| `reservas.csv` | Codigo, cliente, cancha, fecha, horario y estado |
-| `reserva_servicios.csv` | Relacion entre cada reserva y sus servicios |
-| `pagos.csv` | Codigo de reserva y pago, fecha, importe, metodo y observacion |
+| `clientes.csv` | Código, nombre, teléfono, correo y fecha de registro |
+| `canchas.csv` | Código, nombre, tipo, capacidad, precio base, estado y horario |
+| `servicios.csv` | Servicios y precios |
+| `tarifas.csv` | Tres tarifas configurables |
+| `reservas.csv` | Cliente, cancha, fecha, hora, minutos, estado, cancelación y costo histórico |
+| `reserva_servicios.csv` | Relaciones entre reservas y servicios |
+| `pagos.csv` | Importe, fecha, método, observación y reserva asociada |
 
-**Escritura:** `guardar(datos)` genera archivos temporales y luego sustituye los CSV originales.  
-**Lectura:** `cargar()` lee y valida los encabezados, identifica registros duplicados y reconstruye las relaciones entre objetos.  
-**Primer uso:** `cargarOIniciar()` diferencia una instalacion nueva de una carpeta de datos incompleta.
+Se usa **UTF-8** y **punto y coma** como separador. `ArchivosCSV` valida encabezados, relaciones y formatos; escribe archivos temporales que reemplazan los anteriores. Si un archivo está malformado, muestra un error controlado. La carpeta de datos debe respaldarse completa mientras el programa está cerrado.
 
-No hay transaccion unica entre los seis archivos; un corte de energia durante el reemplazo podria dejar datos inconsistentes. Para este proyecto academico se recomienda conservar respaldos de la carpeta completa.
+## 9. Tienda/Cafetería configurable
 
-## 10. Reportes
+El núcleo de reservas funciona sin la tienda. En `datos/configuracion.properties` el campo `modulo_tienda=true` habilita el botón. El valor `false` lo oculta y **no elimina los registros**. El menú también permite cambiar esta opción sin recompilar.
 
-`ServicioReportes.generar(tipo, desde, hasta, canchaFiltro, estadoFiltro)` aplica filtros y selecciona uno de ocho reportes:
+Archivos opcionales: `productos.csv`, `ventas.csv` y `detalle_ventas.csv`. `ServicioTienda.vender()` rechaza cantidades superiores a la existencia disponible. Una venta guarda los precios unitarios de la operación, sus cantidades, un total calculado y una referencia opcional a una reserva. La tienda tiene su propia pantalla de ventas con historial e indicador de stock bajo.
 
-- Reservas por fecha.
-- Reservas por cancha.
-- Ingresos por periodo.
-- Pagos pendientes.
-- Reservas canceladas.
-- Cancha mas utilizada.
-- Horarios de mayor demanda.
-- Clientes con mas reservas.
+## 10. Reportería y Dashboard
 
-`ResultadoReporte` devuelve columnas, filas, resumen y nota. `PanelReportes` los presenta en una tabla Swing.
+`ServicioReportes.generar(...)` devuelve un objeto `ResultadoReporte` con tabla y resumen. Procesa reservas por fecha, por cancha, ingresos por período, pagos pendientes, cancelaciones, cancha más utilizada, horas de demanda y clientes frecuentes. Los ingresos se agrupan por **fecha del pago** y la demanda excluye las reservas canceladas.
 
-El reporte de ingresos utiliza la fecha del **Pago**, no la fecha de la **Reserva**. La ocupacion y los rankings no cuentan reservas canceladas. Los horarios de demanda se agrupan por la hora de inicio.
+`ServicioDashboard.calcular(fecha)` obtiene conteos e importes desde los objetos. Los ingresos de hoy pueden incluir pagos de partidos futuros.
 
-## 11. Validaciones y manejo de errores
+## 11. Pruebas
 
-- Clientes: campos obligatorios, codigo y telefono no duplicados.
-- Canchas: capacidad positiva, estado valido y apertura anterior al cierre.
-- Reservas: duracion positiva, hora final dentro del mismo dia y del horario de cancha, ausencia de traslape.
-- Pagos: importe positivo, maximo dos decimales, no mayor al saldo.
-- CSV: encabezados correctos, referencias existentes y registros bien formados.
-- Interfaz: mensajes con `JOptionPane` cuando se rechaza una operacion o falla la lectura/guardado.
+En `src/test/java/com/canchapro/` están las pruebas ejecutables individualmente desde NetBeans: `PruebasDisponibilidad`, `PruebasPagos`, `PruebasArchivosCSV`, `PruebasFormularios`, `PruebasReportes`, `PruebasFlujoReserva`, `PruebasTarifasDashboard`, `PruebasTienda`, `PruebasInterfaz` y `PruebasInterfazReportes`. Las dos últimas requieren pantalla.
 
-Las validaciones centrales estan en las clases de modelo y servicio, no unicamente en los formularios.
+Los resultados de la revisión final están en `documentacion/resultado_pruebas.txt`. Repetir las pruebas en NetBeans antes de la defensa, porque las instalaciones Java y la ubicación de los datos pueden variar.
 
-## 12. Pruebas del proyecto
+## 12. Riesgos y límites conocidos
 
-Las clases de prueba estan en `src/test/java/com/canchapro/`. Se ejecutan con **Run File** desde NetBeans:
+- No hay copias de seguridad automáticas ni una transacción única para todos los CSV.
+- No hay facturación electrónica ni integración de pagos en línea.
+- Se usa la tarifa de hora inicial, no el cálculo avanzado por tramos.
+- El precio base de `Cancha` es un atributo registrado, pero las tarifas generales configurables gobiernan el costo de nuevas reservas.
+- La tienda es adicional y no debe alterar las operaciones del núcleo.
+- No se exportan reportes directamente a PDF desde la interfaz; el documento académico se entrega por separado.
 
-| Clase | Comprueba |
-| --- | --- |
-| `PruebasDisponibilidad` | Traslapes, canchas inactivas, horarios y limites |
-| `PruebasPagos` | Tarifas, servicios, abonos y saldo |
-| `PruebasArchivosCSV` | Guardado, reconstruccion y archivos invalidos |
-| `PruebasFormularios` | Altas, ediciones, cancelaciones y persistencia |
-| `PruebasInterfaz` | Navegacion y tablas de Swing |
-| `PruebasReportes` | Calculos, agrupaciones y filtros |
-| `PruebasInterfazReportes` | Pantalla y seleccion de reportes |
+## 13. Mantenimiento
 
-Las pruebas de Swing requieren un ambiente grafico. Antes de la entrega final deben ejecutarse nuevamente y registrarse sus resultados.
-
-## 13. Limites y mejoras pendientes
-
-- No se incluye el modulo opcional Tienda/Cafeteria.
-- No se permite configurar tarifas desde archivos.
-- No hay devolucion automatica de pagos cancelados.
-- La gestion de canchas aun no edita todos los campos.
-- No existe un flujo unico que cree la reserva, agregue servicios y cobre en una sola pantalla.
-- No se exportan reportes a PDF ni se dispone de copias de seguridad automaticas.
-
-## 14. Mantenimiento recomendado
-
-Antes de modificar el proyecto, hacer una copia del codigo y de `datos/`. Si se agregan atributos nuevos a las clases, actualizar `ArchivosCSV`, pruebas, UML y manuales. No modificar los datos CSV mientras el programa este abierto.
-
-**Referencia de trabajo:** enunciado "CanchaPro - Sistema de Gestion y Reservas para Complejos Deportivos", proyecto final de Programacion 2.
-
-
-## 15. Cambio de arquitectura en el avance 08
-
-**FormularioNuevaReserva** permite completar el flujo exigido por el enunciado sin separar el primer cobro de la creacion. Busca canchas libres con `ServicioDisponibilidad`, calcula el total con `CalculadoraTarifas`, y envia los datos a `GestionRegistros.registrarReservaCompleta(...)`.
-
-En ese servicio se crea la reserva, se incorporan servicios, se valida y registra el primer anticipo y se confirma. Los datos se guardan mediante `ArchivosCSV.guardar(datos)`. Si el guardado o una regla falla, se elimina la reserva nueva de la lista en memoria.
-
-**cambiarReserva(...)** opera sobre una copia de la reserva antes de aplicar y guardar cambios de estados, servicios o pagos. Si la escritura falla, restaura la referencia anterior en la lista. Despues de guardar correctamente, sincroniza el objeto original con la copia validada. Este mecanismo evita que un pago rechazado quede aplicado solo en memoria; **no** garantiza una transaccion atomica entre los seis archivos CSV.
-
-Para probar las nuevas reglas ejecutar `PruebasFlujoReserva.java`. Comprueba 43 escenarios, incluidos el total, anticipo, conflicto de horario, cambios de estado, recuperacion CSV y fallos simulados de escritura. Se mantienen las pruebas de las fases previas.
+Antes de cambiar una clase, hacer respaldo del código y de la carpeta `datos`. Si se agrega un atributo persistente, actualizar la clase, los archivos CSV, las pruebas, el UML y los manuales. Si el profesor pide agregar limpieza entre reservas, modificar `ServicioDisponibilidad`; si pide un recargo dominical, modificar `CalculadoraTarifas`; si pide un anticipo mínimo, modificar `GestionRegistros`.

@@ -1,0 +1,25 @@
+CANCHAPRO - REVISIÓN FINAL - 14/11/2026
+Compilación: Java --release 17 [CORRECTA]
+== PruebasDisponibilidad ==
+TOTAL: 19 pruebas correctas.
+== PruebasPagos ==
+TOTAL: 26 pruebas correctas.
+== PruebasArchivosCSV ==
+TOTAL 25 pruebas exitosas. Datos de prueba en /tmp/prueba_canchapro_16394929022856756261
+== PruebasFormularios ==
+TOTAL: 25 pruebas correctas.
+== PruebasReportes ==
+TOTAL REPORTES: 38 pruebas correctas.
+== PruebasFlujoReserva ==
+TOTAL AVANCE 08: 43 pruebas correctas.
+== PruebasTarifasDashboard ==
+TOTAL: 11 pruebas correctas.
+== PruebasTienda ==
+TOTAL: 24 pruebas de tienda correctas.
+== PruebasInterfaz ==
+TOTAL: 5 pruebas de interfaz correctas
+== PruebasInterfazReportes ==
+TOTAL: 3 pruebas de interfaz de reportes correctas
+== PruebasInterfazTienda ==
+TOTAL: 3 pruebas de interfaz de tienda correctas.
+RESULTADO: 222 comprobaciones exitosas en 11 clases de prueba.

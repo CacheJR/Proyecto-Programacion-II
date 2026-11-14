@@ -1,135 +1,124 @@
-# Manual de usuario - CanchaPro
+# Manual de Usuario — CanchaPro
 
-**Proyecto:** CanchaPro, Complejo Deportivo La 10  
-**Curso:** Programacion 2  
-**Version documentada:** Avance 08 (noviembre de 2026)
+**Proyecto final de Programación 2** · Complejo Deportivo "La 10" · Versión final de entrega (noviembre de 2026)
 
-## 1. Para que sirve
+## 1. ¿Qué hace el programa?
 
-CanchaPro es un programa de escritorio hecho en Java Swing. Permite llevar el control de clientes, canchas, reservas, pagos y reportes del complejo deportivo. Guarda los datos en archivos CSV, por lo que no necesita una base de datos.
+CanchaPro permite organizar canchas deportivas, clientes, horarios, reservas, servicios y pagos. Incluye reportes de ingresos y demanda, y una tienda opcional. Es una aplicación de escritorio, por lo que no necesita internet ni una base de datos.
 
-## 2. Requisitos y como abrirlo
+## 2. Abrir CanchaPro
 
-- Tener Apache NetBeans y Java JDK 17 o superior.
-- Descargar o clonar el repositorio `CacheJR/Proyecto-Programacion-II`.
-- En NetBeans elegir **File > Open Project** y seleccionar la carpeta donde esta `pom.xml`.
-- Ejecutar la clase `com.canchapro.Main` (por ejemplo, clic derecho en `Main.java` y **Run File**).
+1. Instalar **JDK 17 o superior** y **Apache NetBeans**.
+2. Descargar el proyecto y descomprimirlo.
+3. Abrir la carpeta que tiene `pom.xml` desde **Archivo > Abrir proyecto**.
+4. Buscar `Main.java` y elegir **Run File**, o ejecutar el proyecto.
 
-En el primer inicio, si no hay archivos de datos, el sistema crea la carpeta `datos/` con registros de ejemplo. En los siguientes inicios se cargan los datos guardados. La ruta depende de la carpeta desde la que se ejecuta el programa; puede consultarse en **Configuracion**.
+También puede abrirse con el JAR suministrado, usando Java 17 o superior. La carpeta `datos/` se crea junto al directorio desde el que se ejecuta el programa; en **Configuración** aparece la ruta exacta.
 
-## 3. Pantalla principal
+## 3. Panel principal
 
-El menu lateral contiene las secciones **Inicio, Clientes, Canchas, Disponibilidad, Reservas, Pagos, Reportes y Configuracion**. Basta con hacer clic en una para abrirla.
+En **Inicio** se ven datos reales del sistema:
+
+- **Reservas del día:** reservas de la fecha actual que no están canceladas.
+- **En curso:** reservas de hoy con estado `EN_CURSO`.
+- **Pendientes del día:** reservas de hoy con estado `PENDIENTE`.
+- **Ingresos de hoy:** suma de abonos cobrados hoy, aunque sean de partidos futuros.
+- **Saldo pendiente:** suma de saldos de reservas no canceladas.
+
+El menú también contiene Clientes, Canchas, Disponibilidad, Reservas, Pagos, Reportes, Configuración y, cuando se activa, Tienda.
+
+![Pantalla de inicio](../documentacion/capturas/01_inicio.png)
 
 ## 4. Clientes
 
-### Agregar un cliente
-1. Abrir **Clientes** y presionar **Agregar cliente**.
-2. Escribir codigo, nombre, telefono y correo (opcional).
-3. Confirmar. El sistema valida los campos y guarda el cliente.
-
-### Buscar y modificar
-1. Escribir el codigo, nombre o telefono en la caja de busqueda y presionar **Buscar**.
-2. Para mostrar todos, presionar **Mostrar todos**.
-3. Para modificar, seleccionar una fila y usar **Editar seleccionado**.
-4. Cambiar nombre, telefono o correo y confirmar.
-
-No se admiten codigos repetidos ni el mismo telefono en dos clientes.
+En **Clientes** pulsar **Agregar cliente**, llenar código, nombre, teléfono y correo opcional, y confirmar. Para encontrarlo, escribir su código, nombre o teléfono y pulsar **Buscar**. Para modificar un registro, seleccionar la fila y usar **Editar seleccionado**. Se evitan códigos o teléfonos repetidos.
 
 ## 5. Canchas
 
-1. Abrir **Canchas** y presionar **Agregar cancha**.
-2. Indicar codigo, nombre, tipo, capacidad, precio base, estado, apertura y cierre.
-3. Confirmar para guardar.
-4. Para cambiar el estado de una cancha, seleccionar su fila y elegir **Cambiar estado**.
+En **Canchas** usar **Agregar cancha** e ingresar código, nombre, tipo, capacidad, precio base, horario de apertura/cierre y estado. Los estados disponibles son `DISPONIBLE`, `MANTENIMIENTO` e `INACTIVA`. Para suspender una cancha, seleccionar su fila y elegir **Cambiar estado**. Una cancha en mantenimiento o inactiva no aparece como disponible para nuevas reservas.
 
-Los estados son **DISPONIBLE, MANTENIMIENTO e INACTIVA**. Las canchas en mantenimiento o inactivas no pueden recibir nuevas reservas. El precio base almacenado no reemplaza todavia las tarifas generales del sistema.
+## 6. Consultar horarios
 
-## 6. Consultar disponibilidad
+En **Disponibilidad** indicar fecha (`AAAA-MM-DD`), hora (`HH:mm`), duración y tipo de cancha. Presionar **Consultar**. El sistema muestra únicamente canchas libres; rechaza traslapes, canchas fuera de servicio y horarios fuera de apertura. Dos reservas pueden tocarse exactamente en la hora de terminación e inicio sin conflicto.
 
-1. Abrir **Disponibilidad**.
-2. Ingresar fecha en formato `AAAA-MM-DD` y hora en formato `HH:mm`.
-3. Elegir duracion (30, 60, 90 o 120 minutos) y tipo de cancha.
-4. Presionar **Consultar**.
+## 7. Crear la reserva completa
 
-La tabla muestra las canchas que cumplen las condiciones y no tienen otra reserva en ese horario. Si dos reservas se tocan exactamente en el limite de hora, no existe conflicto; si se superponen, se rechaza la nueva reserva.
+1. Entrar a **Reservas** y pulsar **Nueva reserva**.
+2. Indicar código, cliente, fecha, hora y duración.
+3. Elegir tipo de cancha y presionar **Buscar canchas libres**.
+4. Seleccionar una cancha del resultado.
+5. Marcar servicios adicionales si se necesitan (Ctrl para varios).
+6. Pulsar **Calcular total** para revisar el importe.
+7. Ingresar un anticipo opcional y su método de pago.
+8. Aceptar. Se guarda la reserva **CONFIRMADA** con el total y saldo.
 
-## 7. Crear o cancelar reservas
+En la tabla de Reservas se puede **Confirmar** una pendiente, **Iniciar** una confirmada, **Finalizar** una en curso o **Cancelar** una pendiente/confirmada. Para cancelar debe indicarse motivo y responsable. No se borra el registro del historial.
 
-### Crear una reserva
-1. Abrir **Reservas** y presionar **Nueva reserva**.
-2. Ingresar un codigo y seleccionar un cliente y una cancha.
-3. Indicar fecha, hora inicial y duracion en minutos.
-4. Confirmar. Si el horario esta libre, la nueva reserva se registra con estado **PENDIENTE**.
+![Pantalla de reservas](../documentacion/capturas/02_reservas.png)
 
-Se comprueban la existencia del cliente, el estado de la cancha, el horario de apertura y cierre y los traslapes con reservas anteriores. El sistema calcula la hora final.
+## 8. Cobrar otros abonos
 
-### Cancelar una reserva
-1. En **Reservas**, seleccionar la fila correspondiente.
-2. Presionar **Cancelar seleccionada**.
-3. Escribir el motivo y el operador responsable.
-4. Confirmar. La reserva se conserva en el historial como **CANCELADA**.
+En **Pagos** seleccionar la reserva, escribir el monto y el método y pulsar **Registrar abono**. También se pueden agregar servicios **antes del primer pago**. La tabla muestra costo de cancha, servicios, total, pagado y saldo.
 
-No es posible cancelar una reserva que ya este finalizada, en curso o cancelada. La cancelacion no hace automaticamente devoluciones de dinero.
+No se aceptan montos negativos, cero ni mayores que el saldo. Cancelar una reserva no realiza devoluciones automáticamente.
 
-## 8. Agregar servicios y registrar abonos
+## 9. Configurar tarifas y Tienda
 
-1. Abrir **Pagos**.
-2. Para un servicio adicional, seleccionar reserva y servicio, y pulsar **Agregar servicio**.
-3. Para un abono, seleccionar reserva, indicar el monto y metodo de pago, y presionar **Registrar abono**.
-4. Revisar la tabla de **Total Q, Pagado Q y Saldo Q**.
+En **Configuración** se pueden cambiar las tres tarifas generales y guardarlas en `datos/tarifas.csv`:
 
-Un abono no puede ser negativo, cero ni mayor que el saldo pendiente. El sistema permite varios pagos por reserva. En esta version, los servicios se agregan **antes del primer pago**, no despues.
-
-**Tarifas generales de referencia:**
-
-| Horario | Precio |
+| Condición | Tarifa inicial |
 | --- | ---: |
-| Lunes a viernes, antes de las 17:00 | Q150 por hora |
-| Lunes a viernes, desde las 17:00 | Q225 por hora |
-| Sabado y domingo | Q250 por hora |
+| Lunes a viernes antes de 17:00 | Q150/h |
+| Lunes a viernes desde 17:00 | Q225/h |
+| Sábado y domingo | Q250/h |
 
-Si una reserva cruza franjas se utiliza la tarifa correspondiente a **la hora de inicio**.
+Los cambios **solo afectan reservas creadas después del cambio**: los importes anteriores siguen intactos. Se usa la tarifa de la hora inicial cuando una reserva cruza dos franjas.
 
-## 9. Consultar reportes
+Para usar la Tienda, marcar **Habilitar Tienda / Cafetería** y presionar **Guardar opción de tienda**. Aparecerá el botón Tienda. Se puede desactivar del mismo modo sin borrar el inventario.
 
-1. Abrir **Reportes**.
-2. Escoger el reporte deseado, el rango de fechas y opcionalmente cancha y estado.
-3. Presionar **Consultar** y revisar los resultados.
+![Pantalla de configuración](../documentacion/capturas/04_configuracion.png)
 
-Los reportes son: **reservas por fecha, reservas por cancha, ingresos por periodo, pagos pendientes, reservas canceladas, cancha mas utilizada, horarios de mayor demanda y clientes con mas reservas**.
+## 10. Tienda/Cafetería (opcional)
 
-Importante: los ingresos reflejan **pagos efectivamente registrados por fecha de cobro**. Las cancelaciones se filtran por fecha de cancelacion. El horario de demanda se mide por la hora de inicio de las reservas.
+Al entrar a **Tienda**, presionar **Agregar producto** para crear un producto con código, nombre, categoría, precio, existencia y stock mínimo. Presionar **Nueva venta** para seleccionar uno o varios productos (Ctrl), especificar la cantidad de cada uno, elegir forma de pago y opcionalmente indicar el código de reserva asociada. La venta disminuye el inventario automáticamente.
 
-## 10. Guardar datos y hacer copias de seguridad
+No es posible vender más unidades que las disponibles. La tabla muestra ventas e importes, y el indicador **STOCK BAJO** cuando se alcanza o baja del mínimo.
 
-Los cambios de clientes, canchas, reservas y pagos se guardan en `datos/`. En **Configuracion** se puede ver la ruta real y presionar **Guardar datos ahora**. Para hacer una copia de seguridad, cerrar CanchaPro y copiar toda la carpeta `datos/` a otra ubicacion.
+![Pantalla de Tienda](../documentacion/capturas/05_tienda.png)
 
-No eliminar ni modificar manualmente los CSV mientras el programa este abierto. Si falta un archivo o tiene datos incorrectos, CanchaPro puede mostrar un error al iniciar; se debe restaurar una copia valida, no crear archivos vacios para ocultar el problema.
+## 11. Reportes
 
-## 11. Problemas frecuentes
+En **Reportes** elegir uno de los ocho informes y aplicar rango de fechas y filtros de cancha/estado:
 
-| Situacion | Que revisar |
+1. Reservas por fecha.
+2. Reservas por cancha.
+3. Ingresos por período.
+4. Pagos pendientes.
+5. Reservas canceladas.
+6. Cancha más utilizada.
+7. Horarios de mayor demanda.
+8. Clientes con más reservas.
+
+Los ingresos se cuentan por **fecha de cobro**, no por fecha del partido. Los reportes de demanda excluyen reservas canceladas.
+
+![Pantalla de Reportes](../documentacion/capturas/03_reportes.png)
+
+## 12. Cerrar, respaldar y restaurar
+
+Los cambios se guardan en CSV. Para hacer un respaldo, **cerrar el sistema** y copiar completa la carpeta `datos/` a una memoria USB u otra carpeta. Para restaurar, cerrar el programa, sustituir `datos/` con el respaldo y abrirlo nuevamente. No editar manualmente los CSV mientras CanchaPro esté ejecutándose.
+
+Si se detecta una línea corrupta o falta alguno de los archivos principales, el programa mostrará un mensaje de error en lugar de reemplazarlos silenciosamente.
+
+## 13. Solución de problemas
+
+| Problema | Qué revisar |
 | --- | --- |
-| NetBeans no inicia | JDK 17 o superior y proyecto abierto desde `pom.xml` |
-| Fecha u hora invalida | Formato `AAAA-MM-DD` y `HH:mm` |
-| No aparece cancha disponible | Fecha, tipo, horario, mantenimiento y reservas existentes |
-| No permite reservar | Codigo duplicado, cancha no disponible o traslape |
-| Pago rechazado | El monto debe ser mayor que cero y no superar el saldo |
-| Error al cargar CSV | Restaurar la carpeta `datos/` desde una copia completa |
+| No inicia en NetBeans | JDK 17+, `pom.xml` y carpeta abierta correctamente |
+| Fecha u hora inválida | Usar `AAAA-MM-DD` y `HH:mm` |
+| No aparece cancha | Estado, tipo, horario y traslapes |
+| Reserva no permitida | Código repetido, horario ocupado o cancha en mantenimiento |
+| Pago rechazado | Monto positivo y no superior al saldo |
+| Venta rechazada | Producto activo, cantidades válidas y stock disponible |
+| Error de CSV | Restaurar una copia completa de `datos/` |
 
-## 12. Funciones que todavia estan pendientes
-
-La version 07 no incluye tienda/cafeteria, devoluciones automaticas, edicion completa de todos los datos de una cancha, exportacion de reportes a PDF ni configuracion de tarifas desde CSV. El sistema funciona como proyecto academico y todavia puede recibir mejoras.
-
-
-## 13. Actualizacion del avance 08: reserva completa
-
-En la seccion **Reservas**, **Nueva reserva** ahora abre un formulario para:
-1. Seleccionar cliente, fecha, hora, duracion y tipo.
-2. Presionar **Buscar canchas libres** y seleccionar una de las canchas encontradas.
-3. Seleccionar uno o varios servicios (Ctrl + clic).
-4. Presionar **Calcular total**.
-5. Registrar un primer anticipo (Q0 si no hay anticipo), elegir metodo de pago y confirmar.
-
-La reserva se guarda como **CONFIRMADA**. En la misma pantalla se dispone de los botones **Confirmar**, **Iniciar** y **Finalizar**, que respetan las transiciones permitidas. Las cancelaciones se registran con motivo y responsable. Si el guardado de un pago falla, se restaura el valor anterior en memoria. La persistencia de seis CSV no equivale a una transaccion de base de datos, por lo que se deben hacer respaldos.
+**Importante:** CanchaPro es un proyecto académico; no incorpora autenticación, pagos bancarios en línea, facturación electrónica ni copias automáticas.

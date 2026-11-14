@@ -2,6 +2,8 @@ package com.canchapro.persistencia;
 
 import com.canchapro.DatosSistema;
 import com.canchapro.modelo.*;
+import com.canchapro.servicio.CalculadoraTarifas;
+import com.canchapro.servicio.ConfiguracionTarifas;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -31,11 +33,14 @@ public class ArchivosCSV {
             // Si la carpeta tiene otros archivos, no asumir que es una instalacion nueva.
             if (Files.exists(carpeta)) {
                 try (var lista = Files.list(carpeta)) {
-                    if (lista.findAny().isPresent()) {
+                    if (lista.anyMatch(ruta -> !Set.of("configuracion.properties", "productos.csv",
+                            "ventas.csv", "detalle_ventas.csv").contains(ruta.getFileName().toString()))) {
                         throw new IOException("La carpeta de datos ya existe, pero faltan los CSV");
                     }
                 }
             }
+            guardarTarifas(ConfiguracionTarifas.valoresIniciales());
+            CalculadoraTarifas.aplicarConfiguracion(ConfiguracionTarifas.valoresIniciales());
             DatosSistema ejemplos = DatosSistema.ejemplos();
             guardar(ejemplos);
             return ejemplos;
@@ -43,11 +48,52 @@ public class ArchivosCSV {
         if (encontrados != NOMBRES.length) {
             throw new IOException("Falta uno o varios archivos CSV en " + getCarpeta());
         }
+        // Instalaciones previas tienen seis CSV. Se crea tarifas.csv sin perder sus datos.
+        if (!Files.exists(carpeta.resolve("tarifas.csv"))) {
+            guardarTarifas(ConfiguracionTarifas.valoresIniciales());
+        }
         return cargar();
+    }
+
+    public ConfiguracionTarifas cargarTarifas() throws IOException {
+        List<String[]> filas = leer("tarifas.csv", "tipo", "precio");
+        Map<String, BigDecimal> precios = new HashMap<>();
+        for (String[] f : filas) {
+            try {
+                if (precios.putIfAbsent(f[0], new BigDecimal(f[1])) != null)
+                    throw new IllegalArgumentException("Tipo de tarifa repetido");
+            } catch (RuntimeException e) { throw errorFila("tarifas.csv", f, e); }
+        }
+        if (precios.size() != 3 || !precios.keySet().equals(Set.of("DIURNA", "NOCTURNA", "FIN_SEMANA")))
+            throw new IOException("tarifas.csv debe incluir DIURNA, NOCTURNA y FIN_SEMANA");
+        try {
+            return new ConfiguracionTarifas(precios.get("DIURNA"), precios.get("NOCTURNA"), precios.get("FIN_SEMANA"));
+        } catch (RuntimeException e) { throw new IOException("Tarifas invalidas: " + e.getMessage(), e); }
+    }
+
+    public void guardarTarifas(ConfiguracionTarifas tarifas) throws IOException {
+        Files.createDirectories(carpeta);
+        Path temporal = Files.createTempFile(carpeta, "tarifas_", ".tmp");
+        try {
+            Files.write(temporal, List.of("tipo;precio", "DIURNA;" + tarifas.getDiurna(),
+                "NOCTURNA;" + tarifas.getNocturna(), "FIN_SEMANA;" + tarifas.getFinSemana()),
+                StandardCharsets.UTF_8);
+            try {
+                Files.move(temporal, carpeta.resolve("tarifas.csv"), StandardCopyOption.REPLACE_EXISTING,
+                        StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(temporal, carpeta.resolve("tarifas.csv"), StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally { Files.deleteIfExists(temporal); }
     }
 
     /** Reconstruye Cliente, Cancha, Reserva, sus servicios y pagos. */
     public DatosSistema cargar() throws IOException {
+        if (Files.exists(carpeta.resolve("tarifas.csv"))) {
+            CalculadoraTarifas.aplicarConfiguracion(cargarTarifas());
+        } else {
+            CalculadoraTarifas.aplicarConfiguracion(ConfiguracionTarifas.valoresIniciales());
+        }
         List<Cliente> clientes = new ArrayList<>();
         List<Cancha> canchas = new ArrayList<>();
         List<ServicioAdicional> servicios = new ArrayList<>();
@@ -80,8 +126,18 @@ public class ArchivosCSV {
                 servicios.add(s);
             } catch (RuntimeException e) { throw errorFila("servicios.csv", f, e); }
         }
-        List<String[]> lineasReservas = leer("reservas.csv", "codigo", "cliente", "cancha", "fecha",
+        List<String[]> lineasReservas;
+        boolean nuevoFormato;
+        try {
+            lineasReservas = leer("reservas.csv", "codigo", "cliente", "cancha", "fecha",
+                "inicio", "minutos", "estado", "fechaCancelacion", "motivo", "operador", "costoCancha");
+            nuevoFormato = true;
+        } catch (IOException error) {
+            if (!error.getMessage().startsWith("Encabezado incorrecto:")) throw error;
+            lineasReservas = leer("reservas.csv", "codigo", "cliente", "cancha", "fecha",
                 "inicio", "minutos", "estado", "fechaCancelacion", "motivo", "operador");
+            nuevoFormato = false;
+        }
         Set<String> codigosReservas = new HashSet<>();
         for (String[] f : lineasReservas) {
             if (!codigosReservas.add(f[0].toUpperCase(Locale.ROOT)))
@@ -108,7 +164,10 @@ public class ArchivosCSV {
                     LocalDate.parse(f[3]), LocalTime.parse(f[4]), Integer.parseInt(f[5]),
                     EstadoReserva.valueOf(f[6]), f[7].isEmpty() ? null : LocalDateTime.parse(f[7]),
                     f[8], f[9], serviciosPorReserva.getOrDefault(f[0], List.of()),
-                    pagosPorReserva.getOrDefault(f[0], List.of()));
+                    pagosPorReserva.getOrDefault(f[0], List.of()),
+                    nuevoFormato ? new BigDecimal(f[10]) :
+                    CalculadoraTarifas.costoHistoricoInicial(LocalDate.parse(f[3]),
+                        LocalTime.parse(f[4]), Integer.parseInt(f[5])));
                 reservas.add(r);
             } catch (RuntimeException e) { throw errorFila("reservas.csv", f, e); }
         }
@@ -118,11 +177,13 @@ public class ArchivosCSV {
     /** Escribe primero archivos temporales y luego reemplaza los originales. */
     public void guardar(DatosSistema datos) throws IOException {
         Files.createDirectories(carpeta);
+        if (!Files.exists(carpeta.resolve("tarifas.csv")))
+            guardarTarifas(ConfiguracionTarifas.valoresIniciales());
         Map<String, List<String>> salida = new LinkedHashMap<>();
         salida.put("clientes.csv", new ArrayList<>(List.of(fila("codigo", "nombre", "telefono", "correo", "fechaRegistro"))));
         salida.put("canchas.csv", new ArrayList<>(List.of(fila("codigo", "nombre", "tipo", "capacidad", "precioBase", "estado", "apertura", "cierre"))));
         salida.put("servicios.csv", new ArrayList<>(List.of(fila("codigo", "nombre", "precio"))));
-        salida.put("reservas.csv", new ArrayList<>(List.of(fila("codigo", "cliente", "cancha", "fecha", "inicio", "minutos", "estado", "fechaCancelacion", "motivo", "operador"))));
+        salida.put("reservas.csv", new ArrayList<>(List.of(fila("codigo", "cliente", "cancha", "fecha", "inicio", "minutos", "estado", "fechaCancelacion", "motivo", "operador", "costoCancha"))));
         salida.put("reserva_servicios.csv", new ArrayList<>(List.of(fila("reserva", "servicio"))));
         salida.put("pagos.csv", new ArrayList<>(List.of(fila("reserva", "codigo", "fechaHora", "monto", "metodo", "observacion"))));
         for (Cliente c : datos.getClientes()) {
@@ -138,7 +199,8 @@ public class ArchivosCSV {
         for (Reserva r : datos.getReservas()) {
             salida.get("reservas.csv").add(fila(r.getCodigo(), r.getCliente().getCodigo(), r.getCancha().getCodigo(),
                     r.getFecha(), r.getHoraInicio(), r.getDuracionMinutos(), r.getEstado().name(),
-                    r.getFechaCancelacion(), r.getMotivoCancelacion(), r.getOperadorCancelacion()));
+                    r.getFechaCancelacion(), r.getMotivoCancelacion(), r.getOperadorCancelacion(),
+                    r.getCostoCancha()));
             for (ServicioAdicional s : r.getServicios()) {
                 salida.get("reserva_servicios.csv").add(fila(r.getCodigo(), s.getCodigo()));
             }

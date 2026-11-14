@@ -2,6 +2,13 @@ package com.canchapro.ui;
 
 import com.canchapro.DatosSistema;
 import com.canchapro.servicio.GestionRegistros;
+import com.canchapro.servicio.ServicioDashboard;
+import com.canchapro.servicio.CalculadoraTarifas;
+import com.canchapro.servicio.ConfiguracionTarifas;
+import com.canchapro.tienda.ArchivosTienda;
+import com.canchapro.tienda.ServicioTienda;
+import com.canchapro.tienda.ConfiguracionModulos;
+import javax.swing.JCheckBox;
 import com.canchapro.persistencia.ArchivosCSV;
 import java.nio.file.Path;
 import java.io.IOException;
@@ -64,6 +71,9 @@ public class VentanaPrincipal extends JFrame {
 
     private final ArchivosCSV archivos = new ArchivosCSV(Path.of("datos"));
     private final DatosSistema datos;
+    private final ConfiguracionModulos modulos;
+    private ServicioTienda tienda;
+    private JButton botonTienda;
     private final List<Cliente> clientes;
     private final List<Cancha> canchas;
     private final List<Reserva> reservas;
@@ -79,6 +89,10 @@ public class VentanaPrincipal extends JFrame {
     public VentanaPrincipal() {
         try {
             datos = archivos.cargarOIniciar();
+            modulos = new ConfiguracionModulos(archivos.getCarpeta());
+            if (modulos.isTiendaActiva()) {
+                tienda = new ServicioTienda(new ArchivosTienda(archivos.getCarpeta()), datos);
+            }
         } catch (IOException error) {
             throw new IllegalStateException("No se pudieron leer los archivos de datos. "
                     + "Revise la carpeta 'datos': " + error.getMessage(), error);
@@ -136,6 +150,9 @@ public class VentanaPrincipal extends JFrame {
             menu.add(crearBotonMenu(modulo[0], modulo[1]));
             menu.add(Box.createVerticalStrut(10));
         }
+        botonTienda = crearBotonMenu("Tienda", "TIENDA");
+        botonTienda.setVisible(modulos.isTiendaActiva());
+        menu.add(botonTienda);
         return menu;
     }
 
@@ -178,13 +195,15 @@ public class VentanaPrincipal extends JFrame {
 
         JPanel resumen = new JPanel(new GridLayout(2, 2, 16, 16));
         resumen.setBackground(AZUL_FONDO);
-        resumen.add(crearTarjeta("Clientes", clientes.size() + " registrados"));
-        resumen.add(crearTarjeta("Canchas", canchas.size() + " registradas"));
-        resumen.add(crearTarjeta("Reservas", reservas.size() + " registradas"));
-        resumen.add(crearTarjeta("Pagos", "Abonos y saldos"));
+        ServicioDashboard.Resumen indicadores = new ServicioDashboard(datos).calcular(LocalDate.now());
+        resumen.add(crearTarjeta("Reservas del dia", String.valueOf(indicadores.reservasHoy())));
+        resumen.add(crearTarjeta("En curso", String.valueOf(indicadores.enCurso())));
+        resumen.add(crearTarjeta("Pendientes del dia", String.valueOf(indicadores.pendientesHoy())));
+        resumen.add(crearTarjeta("Ingresos de hoy", "Q" + indicadores.ingresosHoy()));
         inicio.add(resumen, BorderLayout.CENTER);
 
-        JLabel etapa = new JLabel("Avance 07 - Reportes con fechas, cancha y estado");
+        JLabel etapa = new JLabel("Saldo total pendiente: Q" +
+                new ServicioDashboard(datos).calcular(LocalDate.now()).saldosPendientes());
         etapa.setForeground(GRIS_TEXTO);
         etapa.setFont(new Font("SansSerif", Font.ITALIC, 13));
         inicio.add(etapa, BorderLayout.SOUTH);
@@ -379,10 +398,55 @@ public class VentanaPrincipal extends JFrame {
                     "Error de guardado", JOptionPane.ERROR_MESSAGE);
             }
         });
-        JPanel centro = new JPanel(new BorderLayout());
+        ConfiguracionTarifas actual = CalculadoraTarifas.getConfiguracion();
+        JTextField diurna = new JTextField(actual.getDiurna().toString());
+        JTextField nocturna = new JTextField(actual.getNocturna().toString());
+        JTextField finSemana = new JTextField(actual.getFinSemana().toString());
+        JPanel tarifas = new JPanel(new GridLayout(4, 2, 12, 12));
+        tarifas.setBackground(AZUL_MENU);
+        tarifas.setBorder(BorderFactory.createEmptyBorder(16, 18, 16, 18));
+        tarifas.add(etiqueta("Lunes a viernes, antes 17:00 (Q/h):")); tarifas.add(diurna);
+        tarifas.add(etiqueta("Lunes a viernes, desde 17:00 (Q/h):")); tarifas.add(nocturna);
+        tarifas.add(etiqueta("Sabado y domingo (Q/h):")); tarifas.add(finSemana);
+        JButton aplicar = new JButton("Guardar tarifas CSV");
+        aplicar.addActionListener(e -> {
+            try {
+                ConfiguracionTarifas nueva = new ConfiguracionTarifas(
+                        new BigDecimal(diurna.getText().trim()),
+                        new BigDecimal(nocturna.getText().trim()),
+                        new BigDecimal(finSemana.getText().trim()));
+                archivos.guardarTarifas(nueva);
+                CalculadoraTarifas.aplicarConfiguracion(nueva);
+                JOptionPane.showMessageDialog(this, "Tarifas guardadas para nuevas reservas. Los totales anteriores se conservan.");
+            } catch (IllegalArgumentException | IOException error) {
+                JOptionPane.showMessageDialog(this, error.getMessage(), "Tarifa invalida", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        tarifas.add(guardar); tarifas.add(aplicar);
+        JCheckBox activarTienda = new JCheckBox("Habilitar Tienda / Cafeteria");
+        activarTienda.setSelected(modulos.isTiendaActiva());
+        JButton guardarModulo = new JButton("Guardar opcion de tienda");
+        guardarModulo.addActionListener(e -> {
+            try {
+                if (activarTienda.isSelected() && tienda == null)
+                    tienda = new ServicioTienda(new ArchivosTienda(archivos.getCarpeta()), datos);
+                modulos.configurarTienda(activarTienda.isSelected());
+                botonTienda.setVisible(modulos.isTiendaActiva());
+                JOptionPane.showMessageDialog(this, "Configuracion de tienda guardada.");
+            } catch (IOException error) {
+                activarTienda.setSelected(modulos.isTiendaActiva());
+                JOptionPane.showMessageDialog(this, error.getMessage(), "Error de configuracion", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        JPanel opcionTienda = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        opcionTienda.add(activarTienda); opcionTienda.add(guardarModulo);
+        JPanel centro = new JPanel(new BorderLayout(0, 16));
         centro.setBackground(AZUL_FONDO);
-        centro.add(guardar, BorderLayout.NORTH);
-        JLabel aviso = etiqueta("Los archivos se recargan cuando inicia el programa. No borrar ni editar mientras esta abierto.");
+        JPanel opciones = new JPanel(new BorderLayout(0, 12));
+        opciones.add(tarifas, BorderLayout.NORTH);
+        opciones.add(opcionTienda, BorderLayout.CENTER);
+        centro.add(opciones, BorderLayout.NORTH);
+        JLabel aviso = etiqueta("Cambios de tarifa solo afectan reservas nuevas. No editar archivos CSV mientras el programa esta abierto.");
         centro.add(aviso, BorderLayout.SOUTH);
         panel.add(centro, BorderLayout.CENTER);
         return panel;
@@ -432,6 +496,8 @@ public class VentanaPrincipal extends JFrame {
             case "PAGOS" -> crearPanelPagos();
             case "CONFIGURACION" -> crearPanelConfiguracion();
             case "REPORTES" -> new PanelReportes(datos);
+            case "TIENDA" -> modulos.isTiendaActiva() && tienda != null
+                    ? new PanelTienda(this, tienda) : crearPanelPendiente("Tienda deshabilitada");
             default -> crearPanelPendiente(nombre);
         };
         panelPantallas.removeAll();

@@ -1,0 +1,24 @@
+digraph CanchaPro {
+ graph [rankdir=LR, fontname="DejaVu Sans", bgcolor="#FFFFFF", splines=true, nodesep=0.45, ranksep=0.9];
+ node [shape=record, fontname="DejaVu Sans", fontsize=10, style="rounded,filled", fillcolor="#E7EEF7", color="#416D9A"];
+ edge [color="#64748B", arrowsize=0.7];
+ Cliente[label="{Cliente|codigo, nombre, telefono}"];
+ Cancha[label="{Cancha|tipo, horario, estado}"];
+ Reserva[label="{Reserva|fecha, horario, estado|costo fijo, total y saldo}",fillcolor="#CFE3F7"];
+ Pago[label="{Pago|monto, metodo, fecha}"];
+ Servicio[label="{ServicioAdicional|precio}"];
+ Disponibilidad[label="{ServicioDisponibilidad|validar traslapes}"];
+ CSV[label="{ArchivosCSV|guardar / cargar 7 CSV}"];
+ Gestion[label="{GestionRegistros|validar y guardar}"];
+ Pantalla[label="{Interfaz Swing|formularios y reportes}"];
+ Tienda[label="{Tienda opcional|productos, ventas, stock}",fillcolor="#DDF5E7"];
+ Reserva -> Cliente [label="1"];
+ Reserva -> Cancha [label="1"];
+ Reserva -> Pago [label="0..*"];
+ Reserva -> Servicio [label="0..*"];
+ Gestion -> Reserva;
+ Gestion -> Disponibilidad;
+ Gestion -> CSV;
+ Pantalla -> Gestion;
+ Pantalla -> Tienda [label="configurable",style=dashed];
+}
